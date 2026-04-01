@@ -22,30 +22,80 @@ st.markdown("""
     h1 { font-size: 1.8rem !important; }
     h2 { font-size: 1.3rem !important; margin-top: 1rem !important; }
     h3 { font-size: 1.1rem !important; }
-    .stTabs [data-baseweb="tab-list"] { gap: 8px; }
-    .stTabs [data-baseweb="tab"] {
-        padding: 8px 16px;
-        font-size: 0.85rem;
-    }
     div[data-testid="stExpander"] summary {
         font-size: 0.95rem;
         font-weight: 600;
     }
-    .color-swatch {
-        display: inline-block;
-        width: 24px;
-        height: 24px;
-        border-radius: 4px;
-        border: 1px solid #ccc;
-        vertical-align: middle;
-        margin-right: 6px;
+    /* Step navigator bar */
+    .step-nav {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        background: #f8f8f8;
+        border-radius: 10px;
+        padding: 6px 8px;
+        margin-bottom: 16px;
+        border: 1px solid #e0e0e0;
+        overflow-x: auto;
     }
-    .preview-card {
-        background: var(--bg);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 16px;
-        margin: 8px 0;
+    .step-item {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        white-space: nowrap;
+    }
+    .step-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-family: 'Segoe UI', sans-serif;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+        transition: all 0.15s;
+        text-decoration: none;
+        color: #666;
+        background: transparent;
+    }
+    .step-btn:hover {
+        background: #e8e8e8;
+        color: #333;
+    }
+    .step-btn.active {
+        background: #ffffff;
+        color: #1a1a1a;
+        font-weight: 600;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .step-num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        font-size: 11px;
+        font-weight: 700;
+        background: #ddd;
+        color: #666;
+        flex-shrink: 0;
+    }
+    .step-btn.active .step-num {
+        background: #333;
+        color: #fff;
+    }
+    .step-chevron {
+        color: #ccc;
+        font-size: 14px;
+        padding: 0 2px;
+        user-select: none;
+    }
+    /* Hide default button styling for nav buttons */
+    .nav-arrows button {
+        font-size: 0.85rem !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -120,6 +170,30 @@ def render_swatch_row(colors: list, labels: list = None):
         )
     html += '</div>'
     st.markdown(html, unsafe_allow_html=True)
+
+
+def render_nav_arrows(current: int, total: int, step_names: list):
+    """Render Previous / Next navigation arrows at the bottom of each step."""
+    st.markdown("---")
+    cols = st.columns([1, 3, 1])
+    with cols[0]:
+        if current > 0:
+            prev_label = f"← {step_names[current - 1]}"
+            if st.button(prev_label, key=f"prev_{current}", use_container_width=True):
+                st.session_state.current_step = current - 1
+                st.rerun()
+    with cols[1]:
+        st.markdown(
+            f'<div style="text-align:center;color:#999;font-size:12px;padding-top:8px;">'
+            f'Step {current + 1} of {total} — {step_names[current]}</div>',
+            unsafe_allow_html=True,
+        )
+    with cols[2]:
+        if current < total - 1:
+            next_label = f"{step_names[current + 1]} →"
+            if st.button(next_label, key=f"next_{current}", use_container_width=True, type="primary"):
+                st.session_state.current_step = current + 1
+                st.rerun()
 
 
 # ─────────────────────────────────────────────
@@ -248,17 +322,53 @@ with st.sidebar:
 
 
 # ─────────────────────────────────────────────
-# Main area tabs
+# Step-based navigation
 # ─────────────────────────────────────────────
-tab_general, tab_colors, tab_typography, tab_visuals, tab_json, tab_preview = st.tabs([
-    "⚙️ General", "🎨 Colors", "🔤 Typography", "📊 Visual Styles", "📄 JSON", "👁️ Preview"
-])
+STEPS = [
+    ("⚙️", "General"),
+    ("🎨", "Colors"),
+    ("🔤", "Typography"),
+    ("📊", "Visual Styles"),
+    ("📄", "JSON Output"),
+    ("👁️", "Preview"),
+]
+
+if "current_step" not in st.session_state:
+    st.session_state.current_step = 0
+
+current_step = st.session_state.current_step
+
+# ── Render the visual step nav bar (HTML — shows active state + chevrons) ──
+nav_html = '<div class="step-nav">'
+for i, (icon, label) in enumerate(STEPS):
+    active = "active" if i == current_step else ""
+    if i > 0:
+        nav_html += '<span class="step-chevron">›</span>'
+    nav_html += (
+        f'<div class="step-btn {active}">'
+        f'<span class="step-num">{i + 1}</span>'
+        f'{icon} {label}'
+        f'</div>'
+    )
+nav_html += '</div>'
+st.markdown(nav_html, unsafe_allow_html=True)
+
+# ── Clickable button row (mirrors the HTML bar above, provides actual interactivity) ──
+nav_cols = st.columns(len(STEPS))
+for i, (icon, label) in enumerate(STEPS):
+    with nav_cols[i]:
+        btn_type = "primary" if i == current_step else "secondary"
+        if st.button(label, key=f"nav_{i}", use_container_width=True, type=btn_type):
+            st.session_state.current_step = i
+            st.rerun()
+
+st.markdown("---")
 
 
 # ═══════════════════════════════════════════
 # TAB: General
 # ═══════════════════════════════════════════
-with tab_general:
+if current_step == 0:
     st.header("General Settings")
 
     theme["name"] = st.text_input("Theme Name", value=theme.get("name", "Custom Theme"))
@@ -308,10 +418,12 @@ with tab_general:
         theme["minimum"] = st.color_picker("Minimum (gradient)", value=theme.get("minimum", "#DEEFFF"))
 
 
+
+
 # ═══════════════════════════════════════════
 # TAB: Colors (Data Palette)
 # ═══════════════════════════════════════════
-with tab_colors:
+if current_step == 1:
     st.header("Data Colors")
     st.caption("These colors are used for chart series, categories, and data points. "
                "Power BI cycles through them in order.")
@@ -358,10 +470,12 @@ with tab_colors:
     render_swatch_row(theme["dataColors"], [f"#{i+1}" for i in range(len(theme["dataColors"]))])
 
 
+
+
 # ═══════════════════════════════════════════
 # TAB: Typography
 # ═══════════════════════════════════════════
-with tab_typography:
+if current_step == 2:
     st.header("Text Classes")
     st.caption("These define default typography across the report. "
                "Secondary classes (bold label, light label, etc.) inherit from these automatically.")
@@ -402,10 +516,12 @@ with tab_typography:
                 )
 
 
+
+
 # ═══════════════════════════════════════════
 # TAB: Visual Styles
 # ═══════════════════════════════════════════
-with tab_visuals:
+if current_step == 3:
     st.header("Visual Styles")
     st.caption("Configure background, border, and formatting defaults per visual type. "
                "The global wildcard (*) applies to all visuals unless overridden.")
@@ -908,10 +1024,12 @@ with tab_visuals:
                 }]
 
 
+
+
 # ═══════════════════════════════════════════
 # TAB: JSON Output
 # ═══════════════════════════════════════════
-with tab_json:
+if current_step == 4:
     st.header("Generated Theme JSON")
     st.caption("Copy this directly or use the download button in the sidebar.")
 
@@ -936,10 +1054,12 @@ with tab_json:
     )
 
 
+
+
 # ═══════════════════════════════════════════
 # TAB: Preview
 # ═══════════════════════════════════════════
-with tab_preview:
+if current_step == 5:
     st.header("Theme Preview")
     st.caption("Approximate preview of how your theme will look in Power BI.")
 
