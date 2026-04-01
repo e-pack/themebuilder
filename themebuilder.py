@@ -101,30 +101,6 @@ def render_swatch_row(colors: list, labels: list = None):
     st.markdown(html, unsafe_allow_html=True)
 
 
-def render_nav_arrows(current: int, total: int, step_names: list):
-    """Render Previous / Next navigation arrows at the bottom of each step."""
-    st.markdown("---")
-    cols = st.columns([1, 3, 1])
-    with cols[0]:
-        if current > 0:
-            prev_label = f"← {step_names[current - 1]}"
-            if st.button(prev_label, key=f"prev_{current}", use_container_width=True):
-                st.session_state.current_step = current - 1
-                st.rerun()
-    with cols[1]:
-        st.markdown(
-            f'<div style="text-align:center;color:#999;font-size:12px;padding-top:8px;">'
-            f'Step {current + 1} of {total} — {step_names[current]}</div>',
-            unsafe_allow_html=True,
-        )
-    with cols[2]:
-        if current < total - 1:
-            next_label = f"{step_names[current + 1]} →"
-            if st.button(next_label, key=f"next_{current}", use_container_width=True, type="primary"):
-                st.session_state.current_step = current + 1
-                st.rerun()
-
-
 # ─────────────────────────────────────────────
 # Default theme state
 # ─────────────────────────────────────────────
@@ -251,7 +227,7 @@ with st.sidebar:
 
 
 # ─────────────────────────────────────────────
-# Step-based navigation
+# Navigation — Tabs + Arrow helpers
 # ─────────────────────────────────────────────
 STEPS = [
     ("⚙️", "General"),
@@ -267,31 +243,14 @@ if "current_step" not in st.session_state:
 
 current_step = st.session_state.current_step
 
-# ── Navigation using st.columns with short labels ──
-step_labels = [f"{icon} {label}" for icon, label in STEPS]
-selected_label = step_labels[current_step]
-
-chosen = st.radio(
-    "Navigate",
-    step_labels,
-    index=current_step,
-    horizontal=True,
-    label_visibility="collapsed",
-    key="step_radio",
-)
-new_step = step_labels.index(chosen)
-if new_step != current_step:
-    st.session_state.current_step = new_step
-    st.rerun()
-
-current_step = st.session_state.current_step
-st.markdown("---")
+tab_labels = [f"{icon} {label}" for icon, label in STEPS]
+tabs = st.tabs(tab_labels)
 
 
 # ═══════════════════════════════════════════
 # TAB: General
 # ═══════════════════════════════════════════
-if current_step == 0:
+with tabs[0]:
     st.header("General Settings")
 
     theme["name"] = st.text_input("Theme Name", value=theme.get("name", "Custom Theme"))
@@ -346,7 +305,7 @@ if current_step == 0:
 # ═══════════════════════════════════════════
 # TAB: Colors (Data Palette)
 # ═══════════════════════════════════════════
-if current_step == 1:
+with tabs[1]:
     st.header("Data Colors")
     st.caption("These colors are used for chart series, categories, and data points. "
                "Power BI cycles through them in order.")
@@ -398,7 +357,7 @@ if current_step == 1:
 # ═══════════════════════════════════════════
 # TAB: Typography
 # ═══════════════════════════════════════════
-if current_step == 2:
+with tabs[2]:
     st.header("Text Classes")
     st.caption("These define default typography across the report. "
                "Secondary classes (bold label, light label, etc.) inherit from these automatically.")
@@ -444,7 +403,7 @@ if current_step == 2:
 # ═══════════════════════════════════════════
 # TAB: Visual Styles
 # ═══════════════════════════════════════════
-if current_step == 3:
+with tabs[3]:
     st.header("Visual Styles")
     st.caption("Configure background, border, and formatting defaults per visual type. "
                "The global wildcard (*) applies to all visuals unless overridden.")
@@ -952,7 +911,7 @@ if current_step == 3:
 # ═══════════════════════════════════════════
 # TAB: JSON Output
 # ═══════════════════════════════════════════
-if current_step == 4:
+with tabs[4]:
     st.header("Generated Theme JSON")
     st.caption("Copy this directly or use the download button in the sidebar.")
 
@@ -982,7 +941,7 @@ if current_step == 4:
 # ═══════════════════════════════════════════
 # TAB: Preview
 # ═══════════════════════════════════════════
-if current_step == 5:
+with tabs[5]:
     st.header("Theme Preview")
     st.caption("Approximate preview of how your theme will look in Power BI.")
 
