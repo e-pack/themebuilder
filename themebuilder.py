@@ -18,84 +18,13 @@ st.set_page_config(
 # ─────────────────────────────────────────────
 st.markdown("""
 <style>
-    .block-container { padding-top: 1rem; }
+    .block-container { padding-top: 0.5rem; }
     h1 { font-size: 1.8rem !important; }
     h2 { font-size: 1.3rem !important; margin-top: 1rem !important; }
     h3 { font-size: 1.1rem !important; }
     div[data-testid="stExpander"] summary {
         font-size: 0.95rem;
         font-weight: 600;
-    }
-    /* Step navigator bar */
-    .step-nav {
-        display: flex;
-        align-items: center;
-        gap: 0;
-        background: #f8f8f8;
-        border-radius: 10px;
-        padding: 6px 8px;
-        margin-bottom: 16px;
-        border: 1px solid #e0e0e0;
-        overflow-x: auto;
-    }
-    .step-item {
-        display: flex;
-        align-items: center;
-        gap: 0;
-        white-space: nowrap;
-    }
-    .step-btn {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 8px 16px;
-        border-radius: 8px;
-        font-size: 13px;
-        font-family: 'Segoe UI', sans-serif;
-        font-weight: 500;
-        cursor: pointer;
-        border: none;
-        transition: all 0.15s;
-        text-decoration: none;
-        color: #666;
-        background: transparent;
-    }
-    .step-btn:hover {
-        background: #e8e8e8;
-        color: #333;
-    }
-    .step-btn.active {
-        background: #ffffff;
-        color: #1a1a1a;
-        font-weight: 600;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    .step-num {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 22px;
-        height: 22px;
-        border-radius: 50%;
-        font-size: 11px;
-        font-weight: 700;
-        background: #ddd;
-        color: #666;
-        flex-shrink: 0;
-    }
-    .step-btn.active .step-num {
-        background: #333;
-        color: #fff;
-    }
-    .step-chevron {
-        color: #ccc;
-        font-size: 14px;
-        padding: 0 2px;
-        user-select: none;
-    }
-    /* Hide default button styling for nav buttons */
-    .nav-arrows button {
-        font-size: 0.85rem !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -338,27 +267,12 @@ if "current_step" not in st.session_state:
 
 current_step = st.session_state.current_step
 
-# ── Render the visual step nav bar (HTML — shows active state + chevrons) ──
-nav_html = '<div class="step-nav">'
-for i, (icon, label) in enumerate(STEPS):
-    active = "active" if i == current_step else ""
-    if i > 0:
-        nav_html += '<span class="step-chevron">›</span>'
-    nav_html += (
-        f'<div class="step-btn {active}">'
-        f'<span class="step-num">{i + 1}</span>'
-        f'{icon} {label}'
-        f'</div>'
-    )
-nav_html += '</div>'
-st.markdown(nav_html, unsafe_allow_html=True)
-
-# ── Clickable button row (mirrors the HTML bar above, provides actual interactivity) ──
+# ── Clickable navigation buttons ──
 nav_cols = st.columns(len(STEPS))
 for i, (icon, label) in enumerate(STEPS):
     with nav_cols[i]:
         btn_type = "primary" if i == current_step else "secondary"
-        if st.button(label, key=f"nav_{i}", use_container_width=True, type=btn_type):
+        if st.button(f"{icon} {label}", key=f"nav_{i}", use_container_width=True, type=btn_type):
             st.session_state.current_step = i
             st.rerun()
 
