@@ -257,8 +257,8 @@ STEPS = [
     ("⚙️", "General"),
     ("🎨", "Colors"),
     ("🔤", "Typography"),
-    ("📊", "Visual Styles"),
-    ("📄", "JSON Output"),
+    ("📊", "Visuals"),
+    ("📄", "JSON"),
     ("👁️", "Preview"),
 ]
 
@@ -267,15 +267,24 @@ if "current_step" not in st.session_state:
 
 current_step = st.session_state.current_step
 
-# ── Clickable navigation buttons ──
-nav_cols = st.columns(len(STEPS))
-for i, (icon, label) in enumerate(STEPS):
-    with nav_cols[i]:
-        btn_type = "primary" if i == current_step else "secondary"
-        if st.button(f"{icon} {label}", key=f"nav_{i}", use_container_width=True, type=btn_type):
-            st.session_state.current_step = i
-            st.rerun()
+# ── Navigation using st.columns with short labels ──
+step_labels = [f"{icon} {label}" for icon, label in STEPS]
+selected_label = step_labels[current_step]
 
+chosen = st.radio(
+    "Navigate",
+    step_labels,
+    index=current_step,
+    horizontal=True,
+    label_visibility="collapsed",
+    key="step_radio",
+)
+new_step = step_labels.index(chosen)
+if new_step != current_step:
+    st.session_state.current_step = new_step
+    st.rerun()
+
+current_step = st.session_state.current_step
 st.markdown("---")
 
 
