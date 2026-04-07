@@ -18,7 +18,7 @@ st.set_page_config(
 # ─────────────────────────────────────────────
 st.markdown("""
 <style>
-    .block-container { padding-top: 0.5rem; padding-bottom: 2rem; }
+    .block-container { padding-top: 1rem; padding-bottom: 2rem; }
     h1 { font-size: 1.8rem !important; }
     h2 { font-size: 1.3rem !important; margin-top: 1rem !important; }
     h3 { font-size: 1.1rem !important; }
@@ -27,38 +27,42 @@ st.markdown("""
         font-weight: 600;
     }
 
-    /* ── Modern tab bar ── */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 4px;
-        background: #f0f2f6;
-        padding: 5px 6px;
-        border-radius: 12px;
-        border-bottom: none !important;
+    /* ── Vertical nav — hide radio circles, style as nav items ── */
+    div[data-testid="stSidebar"] div[role="radiogroup"] {
+        gap: 2px;
+        display: flex;
+        flex-direction: column;
     }
-    .stTabs [data-baseweb="tab"] {
+    /* Hide the actual radio dot */
+    div[data-testid="stSidebar"] div[role="radiogroup"] input[type="radio"] {
+        display: none;
+    }
+    /* Base nav item */
+    div[data-testid="stSidebar"] div[role="radiogroup"] label {
+        display: flex;
+        align-items: center;
+        padding: 0.55rem 0.9rem;
         border-radius: 8px;
-        padding: 6px 18px;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         font-weight: 500;
         color: #555;
-        background: transparent;
-        border: none !important;
-        outline: none !important;
-        transition: background 0.15s, color 0.15s;
+        cursor: pointer;
+        border-left: 3px solid transparent;
+        transition: background 0.15s, color 0.15s, border-color 0.15s;
+        margin: 1px 0;
+        user-select: none;
     }
-    .stTabs [data-baseweb="tab"]:hover {
-        background: rgba(255,255,255,0.7);
-        color: #111;
+    div[data-testid="stSidebar"] div[role="radiogroup"] label:hover {
+        background: rgba(49,130,206,0.07);
+        color: #1a73e8;
     }
-    .stTabs [aria-selected="true"] {
-        background: #ffffff !important;
-        color: #111 !important;
-        font-weight: 600 !important;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+    /* Active nav item — :has() is supported in all modern browsers */
+    div[data-testid="stSidebar"] div[role="radiogroup"] label:has(input[aria-checked="true"]) {
+        background: rgba(49,130,206,0.12);
+        color: #1a73e8;
+        border-left: 3px solid #1a73e8;
+        font-weight: 600;
     }
-    /* Hide the default bottom indicator line */
-    .stTabs [data-baseweb="tab-highlight"] { display: none !important; }
-    .stTabs [data-baseweb="tab-border"]    { display: none !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -288,11 +292,28 @@ theme = st.session_state.theme
 
 
 # ─────────────────────────────────────────────
-# Sidebar — Import / Export / Reset
+# Sidebar — Navigation + Import / Export / Reset
 # ─────────────────────────────────────────────
+NAV_PAGES = [
+    "⚙️  General",
+    "🎨  Colors",
+    "🔤  Typography",
+    "📊  Visuals",
+    "📄  JSON",
+    "👁️  Preview",
+]
+
 with st.sidebar:
     st.title("🎨 Power BI Theme Builder")
     st.caption("Build, customize, and export Power BI theme JSON files.")
+
+    st.divider()
+
+    current_page = st.radio(
+        "Navigation",
+        NAV_PAGES,
+        label_visibility="collapsed",
+    )
 
     st.divider()
 
@@ -339,16 +360,10 @@ with st.sidebar:
 
 
 
-# ─────────────────────────────────────────────
-# Main tab navigation
-# ─────────────────────────────────────────────
-tabs = st.tabs(["⚙️  General", "🎨  Colors", "🔤  Typography", "📊  Visuals", "📄  JSON", "👁️  Preview"])
-
-
 # ═══════════════════════════════════════════
-# TAB: General
+# PAGE: General
 # ═══════════════════════════════════════════
-with tabs[0]:
+if current_page == NAV_PAGES[0]:
     st.header("General Settings")
 
     theme["name"] = st.text_input("Theme Name", value=theme.get("name", "Custom Theme"))
@@ -438,9 +453,9 @@ with tabs[0]:
 
 
 # ═══════════════════════════════════════════
-# TAB: Colors (Data Palette)
+# PAGE: Colors (Data Palette)
 # ═══════════════════════════════════════════
-with tabs[1]:
+if current_page == NAV_PAGES[1]:
     st.header("Data Colors")
     st.caption("These colors are used for chart series, categories, and data points. "
                "Power BI cycles through them in order.")
@@ -490,9 +505,9 @@ with tabs[1]:
 
 
 # ═══════════════════════════════════════════
-# TAB: Typography
+# PAGE: Typography
 # ═══════════════════════════════════════════
-with tabs[2]:
+if current_page == NAV_PAGES[2]:
     st.header("Text Classes")
     st.caption("These define default typography across the report. "
                "Secondary classes (bold label, light label, etc.) inherit from these automatically.")
@@ -547,9 +562,9 @@ with tabs[2]:
 
 
 # ═══════════════════════════════════════════
-# TAB: Visual Styles
+# PAGE: Visual Styles
 # ═══════════════════════════════════════════
-with tabs[3]:
+if current_page == NAV_PAGES[3]:
     st.header("Visual Styles")
     st.caption("Configure background, border, and formatting defaults per visual type. "
                "The global wildcard (*) applies to all visuals unless overridden.")
@@ -1398,9 +1413,9 @@ with tabs[3]:
 
 
 # ═══════════════════════════════════════════
-# TAB: JSON Output
+# PAGE: JSON Output
 # ═══════════════════════════════════════════
-with tabs[4]:
+if current_page == NAV_PAGES[4]:
     st.header("Generated Theme JSON")
     st.caption("Copy this directly or use the download button in the sidebar.")
 
@@ -1428,9 +1443,9 @@ with tabs[4]:
 
 
 # ═══════════════════════════════════════════
-# TAB: Preview
+# PAGE: Preview
 # ═══════════════════════════════════════════
-with tabs[5]:
+if current_page == NAV_PAGES[5]:
     st.header("Theme Preview")
     st.caption("Approximate preview of how your theme will look in Power BI.")
 
