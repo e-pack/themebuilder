@@ -127,7 +127,40 @@ DEFAULT_THEME = {
         "title": {"fontSize": 12, "fontFace": "Segoe UI Semibold", "color": "#252423"},
         "header": {"fontSize": 12, "fontFace": "Segoe UI Semibold", "color": "#252423"},
         "label": {"fontSize": 10, "fontFace": "Segoe UI", "color": "#252423"},
+        "largeTitle": {"fontSize": 28, "fontFace": "Segoe UI Light", "color": "#252423"},
+        "dataTitle": {"fontSize": 12, "fontFace": "Segoe UI Semibold", "color": "#252423"},
+        "boldLabel": {"fontSize": 10, "fontFace": "Segoe UI Semibold", "color": "#252423"},
+        "largeLabel": {"fontSize": 14, "fontFace": "Segoe UI", "color": "#252423"},
+        "largeLightLabel": {"fontSize": 14, "fontFace": "Segoe UI Light", "color": "#605E5C"},
+        "lightLabel": {"fontSize": 10, "fontFace": "Segoe UI Light", "color": "#605E5C"},
+        "semiboldLabel": {"fontSize": 10, "fontFace": "Segoe UI Semibold", "color": "#252423"},
+        "smallLabel": {"fontSize": 9, "fontFace": "Segoe UI", "color": "#605E5C"},
+        "smallLightLabel": {"fontSize": 9, "fontFace": "Segoe UI Light", "color": "#605E5C"},
+        "smallDataLabel": {"fontSize": 9, "fontFace": "Segoe UI", "color": "#252423"},
     },
+    # Extended foreground/background tokens
+    "foregroundLight": "#B3B0AD",
+    "foregroundDark": "#252423",
+    "foregroundNeutralLight": "#C8C6C4",
+    "foregroundNeutralDark": "#323130",
+    "foregroundNeutralSecondary": "#605E5C",
+    "foregroundNeutralSecondaryAlt": "#6B6B6B",
+    "foregroundNeutralSecondaryAlt2": "#8A8886",
+    "foregroundNeutralTertiary": "#A19F9D",
+    "foregroundNeutralTertiaryAlt": "#B3B0AD",
+    "foregroundSelected": "#118DFF",
+    "foregroundButton": "#FFFFFF",
+    # Extended background tokens
+    "backgroundLight": "#F3F2F1",
+    "backgroundNeutral": "#C8C6C4",
+    "backgroundDark": "#252423",
+    # Interaction / misc tokens
+    "accent": "#118DFF",
+    "hyperlink": "#118DFF",
+    "visitedHyperlink": "#744EC2",
+    "shapeStroke": "#252423",
+    "disabledText": "#B3B0AD",
+    "mapPushpin": "#118DFF",
     "visualStyles": {},
 }
 
@@ -138,34 +171,79 @@ FONT_OPTIONS = [
 ]
 
 VISUAL_TYPES = [
+    # Chart visuals
     ("lineChart", "Line Chart"),
     ("clusteredBarChart", "Clustered Bar"),
     ("clusteredColumnChart", "Clustered Column"),
     ("barChart", "Stacked Bar"),
     ("columnChart", "Stacked Column"),
+    ("hundredPercentStackedBarChart", "100% Stacked Bar"),
+    ("hundredPercentStackedColumnChart", "100% Stacked Column"),
     ("areaChart", "Area Chart"),
+    ("stackedAreaChart", "Stacked Area Chart"),
+    ("hundredPercentStackedAreaChart", "100% Stacked Area"),
     ("lineClusteredColumnComboChart", "Line & Clustered Column Combo"),
     ("lineStackedColumnComboChart", "Line & Stacked Column Combo"),
+    ("ribbonChart", "Ribbon Chart"),
     ("pieChart", "Pie Chart"),
     ("donutChart", "Donut Chart"),
     ("waterfallChart", "Waterfall"),
     ("funnel", "Funnel"),
     ("scatterChart", "Scatter Chart"),
     ("treemap", "Treemap"),
+    # Maps
     ("map", "Map"),
     ("filledMap", "Filled Map"),
+    ("shapeMap", "Shape Map"),
+    ("azureMap", "Azure Map"),
+    # KPI / data
     ("gauge", "Gauge"),
     ("kpi", "KPI"),
     ("card", "Card (Legacy)"),
     ("cardVisual", "Card (New)"),
     ("multiRowCard", "Multi-Row Card"),
+    # Table / matrix
     ("tableEx", "Table"),
     ("pivotTable", "Matrix"),
+    # Slicers
     ("slicer", "Slicer"),
+    ("advancedSlicerVisual", "Advanced Slicer"),
+    ("textSlicer", "Text Filter Slicer"),
+    ("listSlicer", "List Slicer"),
+    # AI / advanced visuals
+    ("keyDriversVisual", "Key Influencers"),
+    ("decompositionTreeVisual", "Decomposition Tree"),
+    ("qnaVisual", "Q&A"),
+    ("aiNarratives", "Smart Narrative"),
+    ("scorecard", "Metrics"),
+    # Script / paginated
+    ("scriptVisual", "R Visual"),
+    ("pythonVisual", "Python Visual"),
+    ("rdlVisual", "Paginated Report"),
+    # Navigation / layout
+    ("actionButton", "Button"),
+    ("bookmarkNavigator", "Bookmark Navigator"),
+    ("pageNavigator", "Page Navigator"),
+    # Static
     ("shape", "Shape"),
     ("image", "Image"),
     ("textbox", "Textbox"),
 ]
+
+# Visual types that have category/value axes and data labels
+AXIS_CHART_VISUALS = {
+    "lineChart", "clusteredBarChart", "clusteredColumnChart", "barChart", "columnChart",
+    "hundredPercentStackedBarChart", "hundredPercentStackedColumnChart",
+    "areaChart", "stackedAreaChart", "hundredPercentStackedAreaChart",
+    "lineClusteredColumnComboChart", "lineStackedColumnComboChart",
+    "ribbonChart", "waterfallChart", "funnel", "scatterChart",
+}
+
+# Visual types that are pie/donut (radial, no standard axes)
+PIE_CHART_VISUALS = {"pieChart", "donutChart", "treemap"}
+
+# Slicer-type visuals
+SLICER_VISUALS = {"slicer", "advancedSlicerVisual", "textSlicer", "listSlicer"}
 
 # ─────────────────────────────────────────────
 # Session state init
@@ -299,6 +377,43 @@ with tabs[0]:
     with col3:
         theme["minimum"] = st.color_picker("Minimum (gradient)", value=theme.get("minimum", "#DEEFFF"))
 
+    st.subheader("Extended Color Tokens")
+    st.caption("Advanced tokens used by specific Power BI UI elements. "
+               "Leave at defaults if unsure — these are resolved from the structural colors above.")
+
+    with st.expander("🎨 Foreground Variants"):
+        ev_col1, ev_col2, ev_col3, ev_col4 = st.columns(4)
+        with ev_col1:
+            theme["accent"] = st.color_picker("Accent", value=theme.get("accent", "#118DFF"), key="ext_accent")
+            theme["foregroundLight"] = st.color_picker("Foreground Light", value=theme.get("foregroundLight", "#B3B0AD"), key="ext_fgLight")
+            theme["foregroundDark"] = st.color_picker("Foreground Dark", value=theme.get("foregroundDark", "#252423"), key="ext_fgDark")
+        with ev_col2:
+            theme["foregroundNeutralLight"] = st.color_picker("Neutral Light", value=theme.get("foregroundNeutralLight", "#C8C6C4"), key="ext_fgNL")
+            theme["foregroundNeutralDark"] = st.color_picker("Neutral Dark", value=theme.get("foregroundNeutralDark", "#323130"), key="ext_fgND")
+            theme["foregroundNeutralSecondary"] = st.color_picker("Neutral Secondary", value=theme.get("foregroundNeutralSecondary", "#605E5C"), key="ext_fgNS")
+        with ev_col3:
+            theme["foregroundNeutralSecondaryAlt"] = st.color_picker("Neutral Secondary Alt", value=theme.get("foregroundNeutralSecondaryAlt", "#6B6B6B"), key="ext_fgNSA")
+            theme["foregroundNeutralSecondaryAlt2"] = st.color_picker("Neutral Secondary Alt2", value=theme.get("foregroundNeutralSecondaryAlt2", "#8A8886"), key="ext_fgNSA2")
+            theme["foregroundNeutralTertiary"] = st.color_picker("Neutral Tertiary", value=theme.get("foregroundNeutralTertiary", "#A19F9D"), key="ext_fgNT")
+        with ev_col4:
+            theme["foregroundNeutralTertiaryAlt"] = st.color_picker("Neutral Tertiary Alt", value=theme.get("foregroundNeutralTertiaryAlt", "#B3B0AD"), key="ext_fgNTA")
+            theme["foregroundSelected"] = st.color_picker("Selected", value=theme.get("foregroundSelected", "#118DFF"), key="ext_fgSel")
+            theme["foregroundButton"] = st.color_picker("Button Text", value=theme.get("foregroundButton", "#FFFFFF"), key="ext_fgBtn")
+
+    with st.expander("🖼️ Background Variants & Interaction Colors"):
+        bv_col1, bv_col2, bv_col3 = st.columns(3)
+        with bv_col1:
+            theme["backgroundLight"] = st.color_picker("Background Light", value=theme.get("backgroundLight", "#F3F2F1"), key="ext_bgLight")
+            theme["backgroundNeutral"] = st.color_picker("Background Neutral", value=theme.get("backgroundNeutral", "#C8C6C4"), key="ext_bgNeutral")
+            theme["backgroundDark"] = st.color_picker("Background Dark", value=theme.get("backgroundDark", "#252423"), key="ext_bgDark")
+        with bv_col2:
+            theme["hyperlink"] = st.color_picker("Hyperlink", value=theme.get("hyperlink", "#118DFF"), key="ext_hyperlink")
+            theme["visitedHyperlink"] = st.color_picker("Visited Hyperlink", value=theme.get("visitedHyperlink", "#744EC2"), key="ext_visitedHyperlink")
+        with bv_col3:
+            theme["shapeStroke"] = st.color_picker("Shape Stroke", value=theme.get("shapeStroke", "#252423"), key="ext_shapeStroke")
+            theme["disabledText"] = st.color_picker("Disabled Text", value=theme.get("disabledText", "#B3B0AD"), key="ext_disabledText")
+            theme["mapPushpin"] = st.color_picker("Map Pushpin", value=theme.get("mapPushpin", "#118DFF"), key="ext_mapPushpin")
+
 
 
 
@@ -372,11 +487,22 @@ with tabs[2]:
         ("title", "Title (Visual Titles / Axis Titles)", "Titles on visuals, category axis titles, slicer headers."),
         ("header", "Header (Key Influencers / Tab Headers)", "Key influencers headers, tab headers."),
         ("label", "Label (Table/Matrix Values, Axis Labels)", "Table values, axis labels, legend text, slicer items."),
+        ("largeTitle", "Large Title", "Large display title, often used for report-level headings."),
+        ("dataTitle", "Data Title", "Semi-bold titles above data areas (e.g. slicer title, matrix header)."),
+        ("boldLabel", "Bold Label", "Bold variant of the standard label class."),
+        ("largeLabel", "Large Label", "Larger body text, e.g. axis tick labels at higher font sizes."),
+        ("largeLightLabel", "Large Light Label", "Larger, lighter-weight variant — subtitles and secondary info."),
+        ("lightLabel", "Light Label", "Light-weight body text for de-emphasised content."),
+        ("semiboldLabel", "Semibold Label", "Slightly heavier than label but lighter than boldLabel."),
+        ("smallLabel", "Small Label", "Smallest regular text — footnotes, small axis labels."),
+        ("smallLightLabel", "Small Light Label", "Smallest light-weight text."),
+        ("smallDataLabel", "Small Data Label", "Small text for inline data labels on charts."),
     ]:
         with st.expander(f"📝 {class_label}"):
             st.caption(description)
             if class_key not in tc:
-                tc[class_key] = {"fontSize": 10, "fontFace": "Segoe UI", "color": "#252423"}
+                tc[class_key] = deepcopy(DEFAULT_THEME["textClasses"].get(
+                    class_key, {"fontSize": 10, "fontFace": "Segoe UI", "color": "#252423"}))
 
             col1, col2, col3 = st.columns(3)
             with col1:
@@ -574,6 +700,84 @@ with tabs[3]:
             "fontFamily": "Segoe UI",
             "labelColor": color_fill(lg_color),
         }]
+
+        st.divider()
+
+        # Visual Header
+        st.markdown("**Visual Header**")
+        vh_cfg = glob.get("visualHeader", [{}])[0] if "visualHeader" in glob else {}
+        vh_col1, vh_col2, vh_col3 = st.columns(3)
+        with vh_col1:
+            vh_show = st.checkbox("Show header", value=vh_cfg.get("show", True), key="glob_vh_show")
+        with vh_col2:
+            vh_icon_color = st.color_picker(
+                "Icon color",
+                value=vh_cfg.get("foreground", {}).get("solid", {}).get("color", "#252423"),
+                key="glob_vh_icon"
+            )
+        with vh_col3:
+            vh_bg_color = st.color_picker(
+                "Header background",
+                value=vh_cfg.get("background", {}).get("solid", {}).get("color", "#FFFFFF"),
+                key="glob_vh_bg"
+            )
+
+        glob["visualHeader"] = [{
+            "show": vh_show,
+            "foreground": color_fill(vh_icon_color),
+            "background": color_fill(vh_bg_color),
+        }]
+
+        st.divider()
+
+        # Drop Shadow
+        st.markdown("**Drop Shadow**")
+        ds_cfg = glob.get("dropShadow", [{}])[0] if "dropShadow" in glob else {}
+        ds_col1, ds_col2, ds_col3, ds_col4 = st.columns(4)
+        with ds_col1:
+            ds_show = st.checkbox("Show shadow", value=ds_cfg.get("show", False), key="glob_ds_show")
+        with ds_col2:
+            ds_color = st.color_picker(
+                "Shadow color",
+                value=ds_cfg.get("color", {}).get("solid", {}).get("color", "#000000"),
+                key="glob_ds_color"
+            )
+        with ds_col3:
+            ds_preset_opts = ["BottomRight", "Bottom", "BottomLeft", "CenterRight", "Center",
+                              "CenterLeft", "TopRight", "Top", "TopLeft", "Custom"]
+            ds_preset_val = ds_cfg.get("preset", "BottomRight")
+            ds_preset_idx = ds_preset_opts.index(ds_preset_val) if ds_preset_val in ds_preset_opts else 0
+            ds_preset = st.selectbox("Preset", ds_preset_opts, index=ds_preset_idx, key="glob_ds_preset")
+        with ds_col4:
+            ds_blur = st.number_input("Blur", 0, 50, value=int(ds_cfg.get("shadowBlur", 4)), key="glob_ds_blur")
+
+        glob["dropShadow"] = [{
+            "show": ds_show,
+            "color": color_fill(ds_color),
+            "preset": ds_preset,
+            "shadowBlur": ds_blur,
+        }]
+
+        st.divider()
+
+        # Padding
+        st.markdown("**Visual Padding**")
+        pad_cfg = glob.get("padding", [{}])[0] if "padding" in glob else {}
+        pad_col1, pad_col2, pad_col3, pad_col4 = st.columns(4)
+        with pad_col1:
+            pad_top = st.number_input("Top", 0, 50,
+                                      value=int(pad_cfg.get("top", 8)), key="glob_pad_top")
+        with pad_col2:
+            pad_right = st.number_input("Right", 0, 50,
+                                        value=int(pad_cfg.get("right", 8)), key="glob_pad_right")
+        with pad_col3:
+            pad_bottom = st.number_input("Bottom", 0, 50,
+                                         value=int(pad_cfg.get("bottom", 8)), key="glob_pad_bottom")
+        with pad_col4:
+            pad_left = st.number_input("Left", 0, 50,
+                                       value=int(pad_cfg.get("left", 8)), key="glob_pad_left")
+
+        glob["padding"] = [{"top": pad_top, "right": pad_right, "bottom": pad_bottom, "left": pad_left}]
 
     # ── Page background ──
     with st.expander("📄 Page Background"):
@@ -905,7 +1109,272 @@ with tabs[3]:
                     "markerSize": ls_marker_size,
                 }]
 
+            # ── Axis chart common fields ──
+            if vis_key in AXIS_CHART_VISUALS:
+                st.markdown("**Category Axis (override)**")
+                cat_cfg = vis_cfg.get("categoryAxis", [{}])[0] if "categoryAxis" in vis_cfg else {}
+                ca2_c1, ca2_c2, ca2_c3, ca2_c4 = st.columns(4)
+                with ca2_c1:
+                    ca2_show = st.checkbox("Show axis", value=cat_cfg.get("show", True),
+                                           key=f"{vis_key}_ca2_show")
+                with ca2_c2:
+                    ca2_color = st.color_picker(
+                        "Label color",
+                        value=cat_cfg.get("labelColor", {}).get("solid", {}).get("color", "#6B6B6B"),
+                        key=f"{vis_key}_ca2_color"
+                    )
+                with ca2_c3:
+                    ca2_size = st.number_input("Font size", 6, 24,
+                                               value=cat_cfg.get("fontSize", 10),
+                                               key=f"{vis_key}_ca2_size")
+                with ca2_c4:
+                    ca2_grid = st.checkbox("Show gridlines",
+                                           value=cat_cfg.get("gridlineShow", False),
+                                           key=f"{vis_key}_ca2_grid")
 
+                vis_cfg["categoryAxis"] = [{
+                    "show": ca2_show,
+                    "labelColor": color_fill(ca2_color),
+                    "fontSize": ca2_size,
+                    "fontFamily": "Segoe UI",
+                    "gridlineShow": ca2_grid,
+                }]
+
+                st.markdown("**Value Axis (override)**")
+                val2_cfg = vis_cfg.get("valueAxis", [{}])[0] if "valueAxis" in vis_cfg else {}
+                va2_c1, va2_c2, va2_c3, va2_c4 = st.columns(4)
+                with va2_c1:
+                    va2_show = st.checkbox("Show axis", value=val2_cfg.get("show", True),
+                                           key=f"{vis_key}_va2_show")
+                with va2_c2:
+                    va2_color = st.color_picker(
+                        "Label color",
+                        value=val2_cfg.get("labelColor", {}).get("solid", {}).get("color", "#6B6B6B"),
+                        key=f"{vis_key}_va2_color"
+                    )
+                with va2_c3:
+                    va2_grid = st.checkbox("Show gridlines",
+                                           value=val2_cfg.get("gridlineShow", True),
+                                           key=f"{vis_key}_va2_grid")
+                with va2_c4:
+                    va2_grid_color = st.color_picker(
+                        "Gridline color",
+                        value=val2_cfg.get("gridlineColor", {}).get("solid", {}).get("color", "#E0E0E0"),
+                        key=f"{vis_key}_va2_grid_color"
+                    )
+
+                vis_cfg["valueAxis"] = [{
+                    "show": va2_show,
+                    "labelColor": color_fill(va2_color),
+                    "fontFamily": "Segoe UI",
+                    "gridlineShow": va2_grid,
+                    "gridlineColor": color_fill(va2_grid_color),
+                }]
+
+                st.markdown("**Data Labels**")
+                dl_cfg = vis_cfg.get("dataLabels", [{}])[0] if "dataLabels" in vis_cfg else {}
+                dl_c1, dl_c2, dl_c3, dl_c4 = st.columns(4)
+                with dl_c1:
+                    dl_show = st.checkbox("Show data labels",
+                                          value=dl_cfg.get("show", False),
+                                          key=f"{vis_key}_dl_show")
+                with dl_c2:
+                    dl_color = st.color_picker(
+                        "Label color",
+                        value=dl_cfg.get("color", {}).get("solid", {}).get("color", "#252423"),
+                        key=f"{vis_key}_dl_color"
+                    )
+                with dl_c3:
+                    dl_size = st.number_input("Font size", 6, 24,
+                                              value=dl_cfg.get("fontSize", 9),
+                                              key=f"{vis_key}_dl_size")
+                with dl_c4:
+                    dl_font_val = dl_cfg.get("fontFamily", "Segoe UI")
+                    dl_font_idx = FONT_OPTIONS.index(dl_font_val) if dl_font_val in FONT_OPTIONS else 0
+                    dl_font = st.selectbox("Font", FONT_OPTIONS, index=dl_font_idx,
+                                           key=f"{vis_key}_dl_font")
+
+                vis_cfg["dataLabels"] = [{
+                    "show": dl_show,
+                    "color": color_fill(dl_color),
+                    "fontSize": dl_size,
+                    "fontFamily": dl_font,
+                }]
+
+            # ── Pie / Donut / Treemap data labels ──
+            if vis_key in PIE_CHART_VISUALS:
+                st.markdown("**Data Labels**")
+                pdl_cfg = vis_cfg.get("dataLabels", [{}])[0] if "dataLabels" in vis_cfg else {}
+                pdl_c1, pdl_c2, pdl_c3 = st.columns(3)
+                with pdl_c1:
+                    pdl_show = st.checkbox("Show data labels",
+                                           value=pdl_cfg.get("show", False),
+                                           key=f"{vis_key}_pdl_show")
+                with pdl_c2:
+                    pdl_color = st.color_picker(
+                        "Label color",
+                        value=pdl_cfg.get("color", {}).get("solid", {}).get("color", "#252423"),
+                        key=f"{vis_key}_pdl_color"
+                    )
+                with pdl_c3:
+                    pdl_size = st.number_input("Font size", 6, 24,
+                                               value=pdl_cfg.get("fontSize", 9),
+                                               key=f"{vis_key}_pdl_size")
+
+                vis_cfg["dataLabels"] = [{
+                    "show": pdl_show,
+                    "color": color_fill(pdl_color),
+                    "fontSize": pdl_size,
+                    "fontFamily": "Segoe UI",
+                }]
+
+            # ── Gauge specific ──
+            if vis_key == "gauge":
+                st.markdown("**Gauge Colors**")
+                gd_cfg = vis_cfg.get("dataPoint", [{}])[0] if "dataPoint" in vis_cfg else {}
+                gd_c1, gd_c2 = st.columns(2)
+                with gd_c1:
+                    gd_fill = st.color_picker(
+                        "Fill color",
+                        value=gd_cfg.get("fill", {}).get("solid", {}).get("color", "#118DFF"),
+                        key="gauge_fill"
+                    )
+                with gd_c2:
+                    gd_target = st.color_picker(
+                        "Target color",
+                        value=gd_cfg.get("target", {}).get("solid", {}).get("color", "#252423"),
+                        key="gauge_target"
+                    )
+
+                vis_cfg["dataPoint"] = [{"fill": color_fill(gd_fill), "target": color_fill(gd_target)}]
+
+                st.markdown("**Callout Value**")
+                gcv_cfg = vis_cfg.get("calloutValue", [{}])[0] if "calloutValue" in vis_cfg else {}
+                gcv_c1, gcv_c2, gcv_c3 = st.columns(3)
+                with gcv_c1:
+                    gcv_show = st.checkbox("Show callout value",
+                                           value=gcv_cfg.get("show", True), key="gauge_cv_show")
+                with gcv_c2:
+                    gcv_color = st.color_picker(
+                        "Color",
+                        value=gcv_cfg.get("color", {}).get("solid", {}).get("color", "#252423"),
+                        key="gauge_cv_color"
+                    )
+                with gcv_c3:
+                    gcv_size = st.number_input("Font size", 6, 45,
+                                               value=gcv_cfg.get("fontSize", 27),
+                                               key="gauge_cv_size")
+
+                vis_cfg["calloutValue"] = [{"show": gcv_show, "color": color_fill(gcv_color),
+                                            "fontSize": gcv_size}]
+
+            # ── KPI specific ──
+            if vis_key == "kpi":
+                st.markdown("**KPI Indicator**")
+                kpi_cfg = vis_cfg.get("*", [{}])[0] if "*" in vis_cfg else {}
+                kpi_c1, kpi_c2, kpi_c3 = st.columns(3)
+                with kpi_c1:
+                    kpi_dir_opts = ["Positive", "Negative"]
+                    kpi_dir_val = kpi_cfg.get("direction", "Positive")
+                    kpi_dir_idx = kpi_dir_opts.index(kpi_dir_val) if kpi_dir_val in kpi_dir_opts else 0
+                    kpi_dir = st.selectbox("Direction", kpi_dir_opts, index=kpi_dir_idx,
+                                           key="kpi_direction",
+                                           help="'High is good' or 'Low is good'")
+                with kpi_c2:
+                    kpi_font_color = st.color_picker(
+                        "Value color",
+                        value=kpi_cfg.get("fontColor", {}).get("solid", {}).get("color", "#252423"),
+                        key="kpi_font_color"
+                    )
+                with kpi_c3:
+                    kpi_icon_show = st.checkbox("Show icon",
+                                                value=kpi_cfg.get("showIcon", True),
+                                                key="kpi_icon_show")
+
+                vis_cfg["*"] = [{
+                    "direction": kpi_dir,
+                    "fontColor": color_fill(kpi_font_color),
+                    "showIcon": kpi_icon_show,
+                }]
+
+            # ── Slicer specific ──
+            if vis_key in SLICER_VISUALS:
+                st.markdown("**Slicer Header**")
+                slh_cfg = vis_cfg.get("title", [{}])[0] if "title" in vis_cfg else {}
+                slh_c1, slh_c2, slh_c3 = st.columns(3)
+                with slh_c1:
+                    slh_show = st.checkbox("Show header",
+                                           value=slh_cfg.get("show", True),
+                                           key=f"{vis_key}_slh_show")
+                with slh_c2:
+                    slh_color = st.color_picker(
+                        "Header color",
+                        value=slh_cfg.get("fontColor", {}).get("solid", {}).get("color", "#252423"),
+                        key=f"{vis_key}_slh_color"
+                    )
+                with slh_c3:
+                    slh_size = st.number_input("Header size", 6, 24,
+                                               value=slh_cfg.get("fontSize", 10),
+                                               key=f"{vis_key}_slh_size")
+
+                vis_cfg["title"] = [{"show": slh_show, "fontColor": color_fill(slh_color),
+                                     "fontSize": slh_size, "fontFamily": "Segoe UI Semibold"}]
+
+                st.markdown("**Slicer Items**")
+                sli_cfg = vis_cfg.get("data", [{}])[0] if "data" in vis_cfg else {}
+                sli_c1, sli_c2 = st.columns(2)
+                with sli_c1:
+                    sli_color = st.color_picker(
+                        "Item font color",
+                        value=sli_cfg.get("fontColor", {}).get("solid", {}).get("color", "#252423"),
+                        key=f"{vis_key}_sli_color"
+                    )
+                with sli_c2:
+                    sli_size = st.number_input("Item font size", 6, 24,
+                                               value=sli_cfg.get("textSize", 10),
+                                               key=f"{vis_key}_sli_size")
+
+                vis_cfg["data"] = [{"fontColor": color_fill(sli_color), "textSize": sli_size}]
+
+            # ── Multi-Row Card specific ──
+            if vis_key == "multiRowCard":
+                st.markdown("**Card Title**")
+                mrc_t_cfg = vis_cfg.get("cardTitle", [{}])[0] if "cardTitle" in vis_cfg else {}
+                mrc_c1, mrc_c2, mrc_c3 = st.columns(3)
+                with mrc_c1:
+                    mrc_t_color = st.color_picker(
+                        "Title color",
+                        value=mrc_t_cfg.get("fontColor", {}).get("solid", {}).get("color", "#252423"),
+                        key="mrc_title_color"
+                    )
+                with mrc_c2:
+                    mrc_t_size = st.number_input("Title size", 6, 24,
+                                                 value=mrc_t_cfg.get("fontSize", 12),
+                                                 key="mrc_title_size")
+                with mrc_c3:
+                    mrc_t_font_val = mrc_t_cfg.get("fontFamily", "Segoe UI Semibold")
+                    mrc_t_font_idx = FONT_OPTIONS.index(mrc_t_font_val) if mrc_t_font_val in FONT_OPTIONS else 1
+                    mrc_t_font = st.selectbox("Title font", FONT_OPTIONS, index=mrc_t_font_idx,
+                                              key="mrc_title_font")
+
+                vis_cfg["cardTitle"] = [{"fontColor": color_fill(mrc_t_color),
+                                         "fontSize": mrc_t_size, "fontFamily": mrc_t_font}]
+
+                st.markdown("**Data Labels**")
+                mrc_d_cfg = vis_cfg.get("dataLabels", [{}])[0] if "dataLabels" in vis_cfg else {}
+                mrc_d1, mrc_d2 = st.columns(2)
+                with mrc_d1:
+                    mrc_d_color = st.color_picker(
+                        "Value color",
+                        value=mrc_d_cfg.get("color", {}).get("solid", {}).get("color", "#118DFF"),
+                        key="mrc_dl_color"
+                    )
+                with mrc_d2:
+                    mrc_d_size = st.number_input("Value size", 6, 45,
+                                                 value=mrc_d_cfg.get("fontSize", 18),
+                                                 key="mrc_dl_size")
+
+                vis_cfg["dataLabels"] = [{"color": color_fill(mrc_d_color), "fontSize": mrc_d_size}]
 
 
 # ═══════════════════════════════════════════
