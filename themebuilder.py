@@ -18,13 +18,24 @@ st.set_page_config(
 # ─────────────────────────────────────────────
 st.markdown("""
 <style>
-    .block-container { padding-top: 0.5rem; }
+    .block-container { padding-top: 1rem; padding-bottom: 2rem; }
     h1 { font-size: 1.8rem !important; }
     h2 { font-size: 1.3rem !important; margin-top: 1rem !important; }
     h3 { font-size: 1.1rem !important; }
     div[data-testid="stExpander"] summary {
         font-size: 0.95rem;
         font-weight: 600;
+    }
+    /* Sidebar nav radio — make options feel like nav items */
+    div[data-testid="stSidebar"] div[role="radiogroup"] label {
+        padding: 0.4rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        display: block;
+        width: 100%;
+    }
+    div[data-testid="stSidebar"] div[role="radiogroup"] label:hover {
+        background: rgba(49,130,206,0.08);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -255,11 +266,29 @@ theme = st.session_state.theme
 
 
 # ─────────────────────────────────────────────
-# Sidebar — Import / Export / Reset
+# Sidebar — Navigation + Import / Export / Reset
 # ─────────────────────────────────────────────
+NAV_PAGES = [
+    "⚙️  General",
+    "🎨  Colors",
+    "🔤  Typography",
+    "📊  Visuals",
+    "📄  JSON",
+    "👁️  Preview",
+]
+
 with st.sidebar:
     st.title("🎨 Power BI Theme Builder")
     st.caption("Build, customize, and export Power BI theme JSON files.")
+
+    st.divider()
+
+    # Navigation
+    current_page = st.radio(
+        "Navigate",
+        NAV_PAGES,
+        label_visibility="collapsed",
+    )
 
     st.divider()
 
@@ -304,31 +333,12 @@ with st.sidebar:
                "Import into PBI via View → Themes → Browse for themes.")
 
 
-# ─────────────────────────────────────────────
-# Navigation — Tabs + Arrow helpers
-# ─────────────────────────────────────────────
-STEPS = [
-    ("⚙️", "General"),
-    ("🎨", "Colors"),
-    ("🔤", "Typography"),
-    ("📊", "Visuals"),
-    ("📄", "JSON"),
-    ("👁️", "Preview"),
-]
-
-if "current_step" not in st.session_state:
-    st.session_state.current_step = 0
-
-current_step = st.session_state.current_step
-
-tab_labels = [f"{icon} {label}" for icon, label in STEPS]
-tabs = st.tabs(tab_labels)
 
 
 # ═══════════════════════════════════════════
-# TAB: General
+# PAGE: General
 # ═══════════════════════════════════════════
-with tabs[0]:
+if current_page == NAV_PAGES[0]:
     st.header("General Settings")
 
     theme["name"] = st.text_input("Theme Name", value=theme.get("name", "Custom Theme"))
@@ -418,9 +428,9 @@ with tabs[0]:
 
 
 # ═══════════════════════════════════════════
-# TAB: Colors (Data Palette)
+# PAGE: Colors (Data Palette)
 # ═══════════════════════════════════════════
-with tabs[1]:
+if current_page == NAV_PAGES[1]:
     st.header("Data Colors")
     st.caption("These colors are used for chart series, categories, and data points. "
                "Power BI cycles through them in order.")
@@ -470,9 +480,9 @@ with tabs[1]:
 
 
 # ═══════════════════════════════════════════
-# TAB: Typography
+# PAGE: Typography
 # ═══════════════════════════════════════════
-with tabs[2]:
+if current_page == NAV_PAGES[2]:
     st.header("Text Classes")
     st.caption("These define default typography across the report. "
                "Secondary classes (bold label, light label, etc.) inherit from these automatically.")
@@ -527,9 +537,9 @@ with tabs[2]:
 
 
 # ═══════════════════════════════════════════
-# TAB: Visual Styles
+# PAGE: Visual Styles
 # ═══════════════════════════════════════════
-with tabs[3]:
+if current_page == NAV_PAGES[3]:
     st.header("Visual Styles")
     st.caption("Configure background, border, and formatting defaults per visual type. "
                "The global wildcard (*) applies to all visuals unless overridden.")
@@ -1378,9 +1388,9 @@ with tabs[3]:
 
 
 # ═══════════════════════════════════════════
-# TAB: JSON Output
+# PAGE: JSON Output
 # ═══════════════════════════════════════════
-with tabs[4]:
+if current_page == NAV_PAGES[4]:
     st.header("Generated Theme JSON")
     st.caption("Copy this directly or use the download button in the sidebar.")
 
@@ -1408,9 +1418,9 @@ with tabs[4]:
 
 
 # ═══════════════════════════════════════════
-# TAB: Preview
+# PAGE: Preview
 # ═══════════════════════════════════════════
-with tabs[5]:
+if current_page == NAV_PAGES[5]:
     st.header("Theme Preview")
     st.caption("Approximate preview of how your theme will look in Power BI.")
 
