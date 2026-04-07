@@ -18,7 +18,7 @@ st.set_page_config(
 # ─────────────────────────────────────────────
 st.markdown("""
 <style>
-    .block-container { padding-top: 1rem; padding-bottom: 2rem; }
+    .block-container { padding-top: 0.5rem; padding-bottom: 2rem; }
     h1 { font-size: 1.8rem !important; }
     h2 { font-size: 1.3rem !important; margin-top: 1rem !important; }
     h3 { font-size: 1.1rem !important; }
@@ -26,17 +26,39 @@ st.markdown("""
         font-size: 0.95rem;
         font-weight: 600;
     }
-    /* Sidebar nav radio — make options feel like nav items */
-    div[data-testid="stSidebar"] div[role="radiogroup"] label {
-        padding: 0.4rem 0.6rem;
-        border-radius: 6px;
-        font-size: 0.95rem;
-        display: block;
-        width: 100%;
+
+    /* ── Modern tab bar ── */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 4px;
+        background: #f0f2f6;
+        padding: 5px 6px;
+        border-radius: 12px;
+        border-bottom: none !important;
     }
-    div[data-testid="stSidebar"] div[role="radiogroup"] label:hover {
-        background: rgba(49,130,206,0.08);
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 8px;
+        padding: 6px 18px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #555;
+        background: transparent;
+        border: none !important;
+        outline: none !important;
+        transition: background 0.15s, color 0.15s;
     }
+    .stTabs [data-baseweb="tab"]:hover {
+        background: rgba(255,255,255,0.7);
+        color: #111;
+    }
+    .stTabs [aria-selected="true"] {
+        background: #ffffff !important;
+        color: #111 !important;
+        font-weight: 600 !important;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+    }
+    /* Hide the default bottom indicator line */
+    .stTabs [data-baseweb="tab-highlight"] { display: none !important; }
+    .stTabs [data-baseweb="tab-border"]    { display: none !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -266,29 +288,11 @@ theme = st.session_state.theme
 
 
 # ─────────────────────────────────────────────
-# Sidebar — Navigation + Import / Export / Reset
+# Sidebar — Import / Export / Reset
 # ─────────────────────────────────────────────
-NAV_PAGES = [
-    "⚙️  General",
-    "🎨  Colors",
-    "🔤  Typography",
-    "📊  Visuals",
-    "📄  JSON",
-    "👁️  Preview",
-]
-
 with st.sidebar:
     st.title("🎨 Power BI Theme Builder")
     st.caption("Build, customize, and export Power BI theme JSON files.")
-
-    st.divider()
-
-    # Navigation
-    current_page = st.radio(
-        "Navigate",
-        NAV_PAGES,
-        label_visibility="collapsed",
-    )
 
     st.divider()
 
@@ -335,10 +339,16 @@ with st.sidebar:
 
 
 
+# ─────────────────────────────────────────────
+# Main tab navigation
+# ─────────────────────────────────────────────
+tabs = st.tabs(["⚙️  General", "🎨  Colors", "🔤  Typography", "📊  Visuals", "📄  JSON", "👁️  Preview"])
+
+
 # ═══════════════════════════════════════════
-# PAGE: General
+# TAB: General
 # ═══════════════════════════════════════════
-if current_page == NAV_PAGES[0]:
+with tabs[0]:
     st.header("General Settings")
 
     theme["name"] = st.text_input("Theme Name", value=theme.get("name", "Custom Theme"))
@@ -428,9 +438,9 @@ if current_page == NAV_PAGES[0]:
 
 
 # ═══════════════════════════════════════════
-# PAGE: Colors (Data Palette)
+# TAB: Colors (Data Palette)
 # ═══════════════════════════════════════════
-if current_page == NAV_PAGES[1]:
+with tabs[1]:
     st.header("Data Colors")
     st.caption("These colors are used for chart series, categories, and data points. "
                "Power BI cycles through them in order.")
@@ -480,9 +490,9 @@ if current_page == NAV_PAGES[1]:
 
 
 # ═══════════════════════════════════════════
-# PAGE: Typography
+# TAB: Typography
 # ═══════════════════════════════════════════
-if current_page == NAV_PAGES[2]:
+with tabs[2]:
     st.header("Text Classes")
     st.caption("These define default typography across the report. "
                "Secondary classes (bold label, light label, etc.) inherit from these automatically.")
@@ -537,9 +547,9 @@ if current_page == NAV_PAGES[2]:
 
 
 # ═══════════════════════════════════════════
-# PAGE: Visual Styles
+# TAB: Visual Styles
 # ═══════════════════════════════════════════
-if current_page == NAV_PAGES[3]:
+with tabs[3]:
     st.header("Visual Styles")
     st.caption("Configure background, border, and formatting defaults per visual type. "
                "The global wildcard (*) applies to all visuals unless overridden.")
@@ -1388,9 +1398,9 @@ if current_page == NAV_PAGES[3]:
 
 
 # ═══════════════════════════════════════════
-# PAGE: JSON Output
+# TAB: JSON Output
 # ═══════════════════════════════════════════
-if current_page == NAV_PAGES[4]:
+with tabs[4]:
     st.header("Generated Theme JSON")
     st.caption("Copy this directly or use the download button in the sidebar.")
 
@@ -1418,9 +1428,9 @@ if current_page == NAV_PAGES[4]:
 
 
 # ═══════════════════════════════════════════
-# PAGE: Preview
+# TAB: Preview
 # ═══════════════════════════════════════════
-if current_page == NAV_PAGES[5]:
+with tabs[5]:
     st.header("Theme Preview")
     st.caption("Approximate preview of how your theme will look in Power BI.")
 
