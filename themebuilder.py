@@ -27,41 +27,38 @@ st.markdown("""
         font-weight: 600;
     }
 
-    /* ── Vertical nav — hide radio circles, style as nav items ── */
-    div[data-testid="stSidebar"] div[role="radiogroup"] {
-        gap: 2px;
-        display: flex;
-        flex-direction: column;
+    /* ── Sidebar nav buttons — flat, left-aligned, full width ── */
+    div[data-testid="stSidebar"] div[data-testid="stButton"] > button {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: #555 !important;
+        text-align: left !important;
+        justify-content: flex-start !important;
+        padding: 0.55rem 0.9rem !important;
+        border-radius: 8px !important;
+        font-size: 0.95rem !important;
+        font-weight: 500 !important;
+        width: 100% !important;
+        border-left: 3px solid transparent !important;
+        transition: background 0.15s, color 0.15s !important;
     }
-    /* Hide the actual radio dot */
-    div[data-testid="stSidebar"] div[role="radiogroup"] input[type="radio"] {
-        display: none;
+    div[data-testid="stSidebar"] div[data-testid="stButton"] > button:hover {
+        background: rgba(49,130,206,0.07) !important;
+        color: #1a73e8 !important;
     }
-    /* Base nav item */
-    div[data-testid="stSidebar"] div[role="radiogroup"] label {
-        display: flex;
-        align-items: center;
+
+    /* ── Active nav item (rendered as markdown div) ── */
+    .nav-active {
         padding: 0.55rem 0.9rem;
         border-radius: 8px;
-        font-size: 0.95rem;
-        font-weight: 500;
-        color: #555;
-        cursor: pointer;
-        border-left: 3px solid transparent;
-        transition: background 0.15s, color 0.15s, border-color 0.15s;
-        margin: 1px 0;
-        user-select: none;
-    }
-    div[data-testid="stSidebar"] div[role="radiogroup"] label:hover {
-        background: rgba(49,130,206,0.07);
-        color: #1a73e8;
-    }
-    /* Active nav item — :has() is supported in all modern browsers */
-    div[data-testid="stSidebar"] div[role="radiogroup"] label:has(input[aria-checked="true"]) {
         background: rgba(49,130,206,0.12);
         color: #1a73e8;
         border-left: 3px solid #1a73e8;
         font-weight: 600;
+        font-size: 0.95rem;
+        margin: 1px 0;
+        line-height: 1.5;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -294,14 +291,17 @@ theme = st.session_state.theme
 # ─────────────────────────────────────────────
 # Sidebar — Navigation + Import / Export / Reset
 # ─────────────────────────────────────────────
-NAV_PAGES = [
-    "⚙️  General",
-    "🎨  Colors",
-    "🔤  Typography",
-    "📊  Visuals",
-    "📄  JSON",
-    "👁️  Preview",
+NAV_ITEMS = [
+    ("⚙️", "General"),
+    ("🎨", "Colors"),
+    ("🔤", "Typography"),
+    ("📊", "Visuals"),
+    ("📄", "JSON"),
+    ("👁️", "Preview"),
 ]
+
+if "current_page" not in st.session_state:
+    st.session_state.current_page = "General"
 
 with st.sidebar:
     st.title("🎨 Power BI Theme Builder")
@@ -309,11 +309,15 @@ with st.sidebar:
 
     st.divider()
 
-    current_page = st.radio(
-        "Navigation",
-        NAV_PAGES,
-        label_visibility="collapsed",
-    )
+    for _icon, _label in NAV_ITEMS:
+        if st.session_state.current_page == _label:
+            st.markdown(f'<div class="nav-active">{_icon}&nbsp;&nbsp;{_label}</div>', unsafe_allow_html=True)
+        else:
+            if st.button(f"{_icon}  {_label}", key=f"nav_{_label}", use_container_width=True):
+                st.session_state.current_page = _label
+                st.rerun()
+
+    current_page = st.session_state.current_page
 
     st.divider()
 
@@ -363,7 +367,7 @@ with st.sidebar:
 # ═══════════════════════════════════════════
 # PAGE: General
 # ═══════════════════════════════════════════
-if current_page == NAV_PAGES[0]:
+if current_page == "General":
     st.header("General Settings")
 
     theme["name"] = st.text_input("Theme Name", value=theme.get("name", "Custom Theme"))
@@ -455,7 +459,7 @@ if current_page == NAV_PAGES[0]:
 # ═══════════════════════════════════════════
 # PAGE: Colors (Data Palette)
 # ═══════════════════════════════════════════
-if current_page == NAV_PAGES[1]:
+if current_page == "Colors":
     st.header("Data Colors")
     st.caption("These colors are used for chart series, categories, and data points. "
                "Power BI cycles through them in order.")
@@ -507,7 +511,7 @@ if current_page == NAV_PAGES[1]:
 # ═══════════════════════════════════════════
 # PAGE: Typography
 # ═══════════════════════════════════════════
-if current_page == NAV_PAGES[2]:
+if current_page == "Typography":
     st.header("Text Classes")
     st.caption("These define default typography across the report. "
                "Secondary classes (bold label, light label, etc.) inherit from these automatically.")
@@ -564,7 +568,7 @@ if current_page == NAV_PAGES[2]:
 # ═══════════════════════════════════════════
 # PAGE: Visual Styles
 # ═══════════════════════════════════════════
-if current_page == NAV_PAGES[3]:
+if current_page == "Visuals":
     st.header("Visual Styles")
     st.caption("Configure background, border, and formatting defaults per visual type. "
                "The global wildcard (*) applies to all visuals unless overridden.")
@@ -1415,7 +1419,7 @@ if current_page == NAV_PAGES[3]:
 # ═══════════════════════════════════════════
 # PAGE: JSON Output
 # ═══════════════════════════════════════════
-if current_page == NAV_PAGES[4]:
+if current_page == "JSON":
     st.header("Generated Theme JSON")
     st.caption("Copy this directly or use the download button in the sidebar.")
 
@@ -1445,7 +1449,7 @@ if current_page == NAV_PAGES[4]:
 # ═══════════════════════════════════════════
 # PAGE: Preview
 # ═══════════════════════════════════════════
-if current_page == NAV_PAGES[5]:
+if current_page == "Preview":
     st.header("Theme Preview")
     st.caption("Approximate preview of how your theme will look in Power BI.")
 
