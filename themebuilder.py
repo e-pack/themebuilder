@@ -49,6 +49,14 @@ st.markdown("""
         color: #1a73e8 !important;
     }
 
+    /* ── Normalize vertical gap between sidebar nav items ── */
+    div[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
+        gap: 2px !important;
+    }
+    div[data-testid="stSidebar"] div[data-testid="stMarkdownContainer"] {
+        line-height: 0 !important;
+    }
+
     /* ── Active nav item (rendered as markdown div) ── */
     .nav-active {
         padding: 0.55rem 0.9rem;
@@ -58,8 +66,8 @@ st.markdown("""
         border-left: 3px solid #1a73e8;
         font-weight: 600;
         font-size: 0.95rem;
-        margin: 1px 0;
         line-height: 1.5;
+        display: block;
     }
 </style>
 """, unsafe_allow_html=True)
