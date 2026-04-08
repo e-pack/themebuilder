@@ -1513,13 +1513,17 @@ if current_page == "Preview":
         """Render a Power BI-style visual tile (white card with header + SVG content)."""
         t_color, t_size, _ = get_title_props("*")
         s_color, s_size = get_subtitle_props("*")
+        subtitle_html = (
+            f'<div style="font-size:11px;color:{s_color};font-family:Segoe UI,sans-serif;margin-top:1px;">{subtitle}</div>'
+            if subtitle else ""
+        )
         header = (
             f'<div style="padding:10px 12px 4px 12px;">'
             f'<div style="display:flex;justify-content:space-between;align-items:flex-start;">'
             f'<div>'
             f'<div style="font-size:{min(t_size,14)}px;font-weight:600;color:{t_color};'
             f'font-family:Segoe UI,sans-serif;line-height:1.3;">{title}</div>'
-            f'{"<div style=\\"font-size:11px;color:" + s_color + ";font-family:Segoe UI,sans-serif;margin-top:1px;\\">" + subtitle + "</div>" if subtitle else ""}'
+            f'{subtitle_html}'
             f'</div>'
             f'<div style="display:flex;gap:4px;opacity:0.35;margin-top:2px;">'
             f'<svg width="14" height="14" viewBox="0 0 16 16" fill="{second_el}"><circle cx="3" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="13" cy="8" r="1.5"/></svg>'
