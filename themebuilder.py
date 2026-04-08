@@ -1,5 +1,6 @@
 import streamlit as st
 import json
+import math
 import colorsys
 from copy import deepcopy
 
@@ -1458,12 +1459,11 @@ if current_page == "Preview":
     fg = theme.get("foreground", "#252423")
     second_el = theme.get("secondLevelElements", "#605E5C")
     third_el = theme.get("thirdLevelElements", "#F3F2F1")
+    accent = theme.get("tableAccent", data_colors[0] if data_colors else "#118DFF")
 
-    # ── Helper: extract visual-specific or global config ──
+    # ── Helpers ──────────────────────────────────────────────────────────────
     def get_vis_prop(vis_key, card_name, prop_name, default):
-        """Walk visualStyles to get a property: vis-specific → global → default."""
         vs_data = theme.get("visualStyles", {})
-        # Try specific visual
         for key in [vis_key, "*"]:
             node = vs_data.get(key, {}).get("*", {})
             if card_name in node:
@@ -1496,9 +1496,9 @@ if current_page == "Preview":
         bg_color = get_vis_fill(vis_key, "background", "color", page_bg)
         bd_show = get_vis_prop(vis_key, "border", "show", False)
         bd_color = get_vis_fill(vis_key, "border", "color", "#E0E0E0")
-        bd_radius = get_vis_prop(vis_key, "border", "radius", 0)
-        eff_bg = bg_color if bg_show else page_bg
-        eff_border = f"1px solid {bd_color}" if bd_show else "1px solid transparent"
+        bd_radius = get_vis_prop(vis_key, "border", "radius", 4)
+        eff_bg = bg_color if bg_show else "#FFFFFF"
+        eff_border = f"1px solid {bd_color}" if bd_show else f"1px solid {third_el}"
         return eff_bg, eff_border, bd_radius
 
     def get_axis_props(vis_key):
@@ -1509,319 +1509,310 @@ if current_page == "Preview":
         va_label_color = get_vis_fill(vis_key, "valueAxis", "labelColor", second_el)
         return va_grid_show, va_grid_color, ax_label_color, ax_font_size, va_label_color
 
-    # ─────────────────────────────────────────
-    # Color palette + structural + semantic
-    # ─────────────────────────────────────────
+    def pbi_tile(title, subtitle, content_svg, width_flex=1, height=240):
+        """Render a Power BI-style visual tile (white card with header + SVG content)."""
+        t_color, t_size, _ = get_title_props("*")
+        s_color, s_size = get_subtitle_props("*")
+        header = (
+            f'<div style="padding:10px 12px 4px 12px;">'
+            f'<div style="display:flex;justify-content:space-between;align-items:flex-start;">'
+            f'<div>'
+            f'<div style="font-size:{min(t_size,14)}px;font-weight:600;color:{t_color};'
+            f'font-family:Segoe UI,sans-serif;line-height:1.3;">{title}</div>'
+            f'{"<div style=\\"font-size:11px;color:" + s_color + ";font-family:Segoe UI,sans-serif;margin-top:1px;\\">" + subtitle + "</div>" if subtitle else ""}'
+            f'</div>'
+            f'<div style="display:flex;gap:4px;opacity:0.35;margin-top:2px;">'
+            f'<svg width="14" height="14" viewBox="0 0 16 16" fill="{second_el}"><circle cx="3" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="13" cy="8" r="1.5"/></svg>'
+            f'</div>'
+            f'</div>'
+            f'</div>'
+        )
+        return (
+            f'<div style="flex:{width_flex};background:#FFFFFF;border:1px solid {third_el};'
+            f'border-radius:4px;display:flex;flex-direction:column;overflow:hidden;min-height:{height}px;">'
+            f'{header}'
+            f'<div style="flex:1;padding:0 8px 8px 8px;">{content_svg}</div>'
+            f'</div>'
+        )
+
+    # ── Data colors and palette swatches ─────────────────────────────────────
     st.subheader("Data Color Palette")
     render_swatch_row(data_colors)
-
     col_struct, col_sem = st.columns(2)
     with col_struct:
         st.markdown("**Structural Colors**")
-        struct_colors = [
-            theme.get("firstLevelElements", "#252423"),
-            theme.get("secondLevelElements", "#605E5C"),
-            theme.get("thirdLevelElements", "#F3F2F1"),
-            theme.get("fourthLevelElements", "#B3B0AD"),
-            theme.get("background", "#FFFFFF"),
-            theme.get("secondaryBackground", "#C8C6C4"),
-            theme.get("tableAccent", "#118DFF"),
-        ]
-        struct_labels = ["1st", "2nd", "3rd", "4th", "Bg", "2nd Bg", "Accent"]
-        render_swatch_row(struct_colors, struct_labels)
-
+        render_swatch_row(
+            [theme.get("firstLevelElements", "#252423"), theme.get("secondLevelElements", "#605E5C"),
+             theme.get("thirdLevelElements", "#F3F2F1"), theme.get("fourthLevelElements", "#B3B0AD"),
+             theme.get("background", "#FFFFFF"), theme.get("secondaryBackground", "#C8C6C4"),
+             theme.get("tableAccent", "#118DFF")],
+            ["1st", "2nd", "3rd", "4th", "Bg", "2nd Bg", "Accent"]
+        )
     with col_sem:
         st.markdown("**Semantic & Gradient**")
-        sem_colors = [theme.get("good", "#2E8B57"), theme.get("neutral", "#D9B300"),
-                      theme.get("bad", "#D64554"), theme.get("maximum", "#118DFF"),
-                      theme.get("center", "#D9B300"), theme.get("minimum", "#DEEFFF")]
-        sem_labels = ["Good", "Neutral", "Bad", "Max", "Center", "Min"]
-        render_swatch_row(sem_colors, sem_labels)
+        render_swatch_row(
+            [theme.get("good", "#2E8B57"), theme.get("neutral", "#D9B300"), theme.get("bad", "#D64554"),
+             theme.get("maximum", "#118DFF"), theme.get("center", "#D9B300"), theme.get("minimum", "#DEEFFF")],
+            ["Good", "Neutral", "Bad", "Max", "Center", "Min"]
+        )
 
     st.divider()
 
-    # ─────────────────────────────────────────
-    # Card Visuals Preview
-    # ─────────────────────────────────────────
-    st.subheader("Card Visuals")
+    # ── Report Canvas ─────────────────────────────────────────────────────────
+    color1 = data_colors[0] if len(data_colors) > 0 else "#118DFF"
+    color2 = data_colors[1] if len(data_colors) > 1 else "#12239E"
+    color3 = data_colors[2] if len(data_colors) > 2 else "#E66C37"
+    color4 = data_colors[3] if len(data_colors) > 3 else "#6B007B"
+    color5 = data_colors[4] if len(data_colors) > 4 else "#E044A7"
 
-    # Try cardVisual first, then card
     card_key = "cardVisual" if "cardVisual" in theme.get("visualStyles", {}) else "card"
-    c_bg, c_border, c_radius = get_container_style(card_key)
-
-    # Get label/value colors
     if card_key == "cardVisual":
         cv_val_color = get_vis_fill("cardVisual", "value", "fontColor", fg)
         cv_val_size = get_vis_prop("cardVisual", "value", "fontSize", 28)
-        cv_lbl_color = get_vis_fill("cardVisual", "label", "fontColor", fg)
-        cv_lbl_size = get_vis_prop("cardVisual", "label", "fontSize", 12)
+        cv_lbl_color = get_vis_fill("cardVisual", "label", "fontColor", second_el)
+        cv_lbl_size = get_vis_prop("cardVisual", "label", "fontSize", 11)
     else:
         cv_val_color = get_vis_fill("card", "labels", "color", fg)
         cv_val_size = get_vis_prop("card", "labels", "fontSize", 28)
-        cv_lbl_color = get_vis_fill("card", "categoryLabels", "color", fg)
-        cv_lbl_size = get_vis_prop("card", "categoryLabels", "fontSize", 12)
+        cv_lbl_color = get_vis_fill("card", "categoryLabels", "color", second_el)
+        cv_lbl_size = get_vis_prop("card", "categoryLabels", "fontSize", 11)
+    cv_val_display = min(cv_val_size, 30)
 
-    title_color, _, _ = get_title_props(card_key)
-    cv_val_display = min(cv_val_size, 36)
-
-    cards_data = [
-        ("Revenue", "$12.4M"),
-        ("Profit", "$3.2M"),
-        ("Units Sold", "847K"),
-        ("COGS", "$9.2M"),
+    # ── Row 1: KPI Cards ──────────────────────────────────────────────────────
+    kpi_data = [
+        ("REVENUE", "$2,297,201", color1),
+        ("PROFIT", "$286,397", color2),
+        ("ORDERS", "5,009", color3),
+        ("CUSTOMERS", "793", color4),
+        ("QUANTITY", "37,873", color5),
     ]
 
-    cards_html = f'<div style="display:flex;gap:14px;padding:20px;background:{page_bg};border-radius:8px;border:1px solid {third_el};">'
-    for lbl, val in cards_data:
-        cards_html += (
-            f'<div style="flex:1;background:{c_bg};border:{c_border};'
-            f'border-radius:{c_radius}px;padding:18px 16px;">'
-            f'<div style="font-size:{cv_lbl_size}px;color:{cv_lbl_color};'
-            f'font-weight:600;font-family:Segoe UI,sans-serif;margin-bottom:4px;">{lbl}</div>'
-            f'<div style="font-size:{cv_val_display}px;color:{cv_val_color};'
-            f'font-family:Segoe UI,sans-serif;font-weight:400;line-height:1.2;">{val}</div>'
+    kpi_tiles = ""
+    for kpi_label, kpi_val, kpi_color in kpi_data:
+        icon_svg = (
+            f'<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">'
+            f'<rect width="32" height="32" rx="6" fill="{kpi_color}" opacity="0.15"/>'
+            f'<rect x="9" y="13" width="14" height="10" rx="1.5" fill="{kpi_color}"/>'
+            f'<rect x="12" y="10" width="8" height="3" rx="1" fill="{kpi_color}" opacity="0.7"/>'
+            f'</svg>'
+        )
+        kpi_tiles += (
+            f'<div style="flex:1;background:#FFFFFF;border:1px solid {third_el};border-radius:4px;'
+            f'padding:14px 16px;display:flex;align-items:center;gap:12px;">'
+            f'{icon_svg}'
+            f'<div>'
+            f'<div style="font-size:10px;font-weight:600;color:{second_el};font-family:Segoe UI,sans-serif;'
+            f'letter-spacing:0.05em;text-transform:uppercase;">{kpi_label}</div>'
+            f'<div style="font-size:{cv_val_display}px;font-weight:400;color:{cv_val_color};'
+            f'font-family:Segoe UI,sans-serif;line-height:1.2;margin-top:2px;">{kpi_val}</div>'
+            f'</div>'
             f'</div>'
         )
-    cards_html += '</div>'
-    st.markdown(cards_html, unsafe_allow_html=True)
 
-    st.divider()
+    # ── Row 2a: Stacked Column Chart SVG ─────────────────────────────────────
+    col_grid_show, col_grid_color, col_ax_color, col_ax_size, col_va_color = get_axis_props("stackedColumnChart")
+    col_title_color, col_title_size, _ = get_title_props("stackedColumnChart")
 
-    # ─────────────────────────────────────────
-    # Bar Chart Preview (SVG)
-    # ─────────────────────────────────────────
-    st.subheader("Clustered Bar Chart")
-
-    bar_bg, bar_border, bar_radius = get_container_style("clusteredBarChart")
-    bar_title_color, bar_title_size, bar_title_font = get_title_props("clusteredBarChart")
-    bar_sub_color, bar_sub_size = get_subtitle_props("clusteredBarChart")
-    bar_grid_show, bar_grid_color, bar_ax_color, bar_ax_size, bar_va_color = get_axis_props("clusteredBarChart")
-
-    bar_data = [
-        ("Product A", [78, 55]),
-        ("Product B", [62, 48]),
-        ("Product C", [95, 70]),
-        ("Product D", [45, 38]),
-        ("Product E", [83, 60]),
+    months_short = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    col_data = [
+        [22000, 18000, 12000],
+        [18000, 14000, 9000],
+        [30000, 24000, 16000],
+        [26000, 20000, 13000],
+        [24000, 19000, 12000],
+        [20000, 16000, 11000],
+        [28000, 22000, 14000],
+        [25000, 20000, 13000],
+        [32000, 26000, 17000],
+        [29000, 23000, 15000],
+        [35000, 28000, 19000],
+        [31000, 25000, 16000],
     ]
-    color1 = data_colors[0] if len(data_colors) > 0 else "#118DFF"
-    color2 = data_colors[1] if len(data_colors) > 1 else "#12239E"
+    col_segment_colors = [color1, color2, color3]
+    col_max = max(sum(m) for m in col_data)
 
-    svg_w, svg_h = 700, 320
-    chart_l, chart_t, chart_r, chart_b = 90, 50, 660, 280
-    chart_w = chart_r - chart_l
-    chart_h = chart_b - chart_t
-    max_val = 100
-    bar_group_h = chart_h / len(bar_data)
-    bar_h = bar_group_h * 0.32
-    bar_gap = bar_group_h * 0.08
+    sc_w, sc_h = 560, 190
+    sc_l, sc_t, sc_r, sc_b = 42, 10, 550, 155
+    sc_cw = sc_r - sc_l
+    sc_ch = sc_b - sc_t
+    n_cols = len(col_data)
+    grp_w = sc_cw / n_cols
+    bar_w = grp_w * 0.6
 
-    bar_svg = f'<svg viewBox="0 0 {svg_w} {svg_h}" xmlns="http://www.w3.org/2000/svg" style="font-family:Segoe UI,sans-serif;">'
-    # Title
-    bar_svg += f'<text x="{chart_l}" y="22" font-size="{min(bar_title_size,16)}" font-weight="600" fill="{bar_title_color}">Sales by Product</text>'
-    bar_svg += f'<text x="{chart_l}" y="38" font-size="{min(bar_sub_size,12)}" fill="{bar_sub_color}">by Region</text>'
-    # Gridlines + value axis labels
-    for tick in range(0, 101, 25):
-        x = chart_l + (tick / max_val) * chart_w
-        if bar_grid_show:
-            bar_svg += f'<line x1="{x}" y1="{chart_t}" x2="{x}" y2="{chart_b}" stroke="{bar_grid_color}" stroke-width="1"/>'
-        bar_svg += f'<text x="{x}" y="{chart_b + 16}" text-anchor="middle" font-size="{min(bar_ax_size,11)}" fill="{bar_va_color}">{tick}</text>'
-    # Bars
-    for i, (label, vals) in enumerate(bar_data):
-        group_y = chart_t + i * bar_group_h
-        y1 = group_y + bar_gap
-        y2 = y1 + bar_h + bar_gap
-        w1 = (vals[0] / max_val) * chart_w
-        w2 = (vals[1] / max_val) * chart_w
-        bar_svg += f'<rect x="{chart_l}" y="{y1}" width="{w1}" height="{bar_h}" rx="2" fill="{color1}"/>'
-        bar_svg += f'<rect x="{chart_l}" y="{y2}" width="{w2}" height="{bar_h}" rx="2" fill="{color2}"/>'
-        label_y = group_y + bar_group_h / 2 + 4
-        bar_svg += f'<text x="{chart_l - 8}" y="{label_y}" text-anchor="end" font-size="{min(bar_ax_size,11)}" fill="{bar_ax_color}">{label}</text>'
-    # Legend
-    leg_x = chart_l
-    bar_svg += f'<rect x="{leg_x}" y="{chart_b + 28}" width="10" height="10" rx="2" fill="{color1}"/>'
-    bar_svg += f'<text x="{leg_x + 14}" y="{chart_b + 37}" font-size="10" fill="{bar_ax_color}">Region A</text>'
-    bar_svg += f'<rect x="{leg_x + 80}" y="{chart_b + 28}" width="10" height="10" rx="2" fill="{color2}"/>'
-    bar_svg += f'<text x="{leg_x + 94}" y="{chart_b + 37}" font-size="10" fill="{bar_ax_color}">Region B</text>'
-    bar_svg += '</svg>'
+    col_svg = f'<svg viewBox="0 0 {sc_w} {sc_h}" xmlns="http://www.w3.org/2000/svg" style="font-family:Segoe UI,sans-serif;width:100%;height:100%;">'
 
-    bar_container = (
-        f'<div style="background:{bar_bg};border:{bar_border};border-radius:{bar_radius}px;'
-        f'padding:12px;margin-bottom:8px;">{bar_svg}</div>'
-    )
-    st.markdown(bar_container, unsafe_allow_html=True)
+    # Y gridlines + labels
+    for tick_pct in [0, 25, 50, 75, 100]:
+        tick_val = int(col_max * tick_pct / 100)
+        y = sc_b - (tick_pct / 100) * sc_ch
+        if col_grid_show and tick_pct > 0:
+            col_svg += f'<line x1="{sc_l}" y1="{y}" x2="{sc_r}" y2="{y}" stroke="{col_grid_color}" stroke-width="0.8" stroke-dasharray="3,3"/>'
+        label_str = f"${tick_val//1000}K" if tick_val >= 1000 else str(tick_val)
+        col_svg += f'<text x="{sc_l - 4}" y="{y + 4}" text-anchor="end" font-size="9" fill="{col_va_color}">{label_str}</text>'
 
-    st.divider()
-
-    # ─────────────────────────────────────────
-    # Line Chart Preview (SVG)
-    # ─────────────────────────────────────────
-    st.subheader("Line Chart")
-
-    line_bg, line_border, line_radius = get_container_style("lineChart")
-    line_title_color, line_title_size, _ = get_title_props("lineChart")
-    line_sub_color, line_sub_size = get_subtitle_props("lineChart")
-    line_grid_show, line_grid_color, line_ax_color, line_ax_size, line_va_color = get_axis_props("lineChart")
-
-    # Line style props
-    line_stroke = get_vis_prop("lineChart", "lineStyles", "strokeWidth", 2)
-    line_marker = get_vis_prop("lineChart", "lineStyles", "showMarker", False)
-    line_marker_size = get_vis_prop("lineChart", "lineStyles", "markerSize", 5)
-
-    line_data_1 = [42, 58, 95, 72, 85, 110, 92, 78, 105, 130, 88, 115]
-    line_data_2 = [30, 42, 65, 58, 70, 82, 75, 60, 88, 95, 72, 90]
-    months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    l_max = 140
-    l_svg_w, l_svg_h = 700, 320
-    l_chart_l, l_chart_t, l_chart_r, l_chart_b = 55, 50, 680, 270
-    l_chart_w = l_chart_r - l_chart_l
-    l_chart_h = l_chart_b - l_chart_t
-
-    line_svg = f'<svg viewBox="0 0 {l_svg_w} {l_svg_h}" xmlns="http://www.w3.org/2000/svg" style="font-family:Segoe UI,sans-serif;">'
-    line_svg += f'<text x="{l_chart_l}" y="22" font-size="{min(line_title_size,16)}" font-weight="600" fill="{line_title_color}">Monthly Revenue</text>'
-    line_svg += f'<text x="{l_chart_l}" y="38" font-size="{min(line_sub_size,12)}" fill="{line_sub_color}">by Product Line</text>'
-
-    # Y gridlines
-    for tick in range(0, l_max + 1, 35):
-        y = l_chart_b - (tick / l_max) * l_chart_h
-        if line_grid_show:
-            line_svg += f'<line x1="{l_chart_l}" y1="{y}" x2="{l_chart_r}" y2="{y}" stroke="{line_grid_color}" stroke-width="1"/>'
-        line_svg += f'<text x="{l_chart_l - 8}" y="{y + 4}" text-anchor="end" font-size="{min(line_ax_size, 10)}" fill="{line_va_color}">{tick}</text>'
-
-    # X axis labels
-    for i, m in enumerate(months):
-        x = l_chart_l + (i / (len(months) - 1)) * l_chart_w
-        line_svg += f'<text x="{x}" y="{l_chart_b + 16}" text-anchor="middle" font-size="{min(line_ax_size, 10)}" fill="{line_ax_color}">{m}</text>'
-
-    # Line helper
-    def draw_line_series(data, color, stroke_w, show_markers, marker_r):
-        points = []
-        for i, val in enumerate(data):
-            x = l_chart_l + (i / (len(data) - 1)) * l_chart_w
-            y = l_chart_b - (val / l_max) * l_chart_h
-            points.append(f"{x},{y}")
-        polyline = f'<polyline points="{" ".join(points)}" fill="none" stroke="{color}" stroke-width="{stroke_w}" stroke-linejoin="round" stroke-linecap="round"/>'
-        markers = ""
-        if show_markers:
-            for i, val in enumerate(data):
-                x = l_chart_l + (i / (len(data) - 1)) * l_chart_w
-                y = l_chart_b - (val / l_max) * l_chart_h
-                markers += f'<circle cx="{x}" cy="{y}" r="{marker_r}" fill="{color}" stroke="white" stroke-width="1.5"/>'
-        return polyline + markers
-
-    line_svg += draw_line_series(line_data_1, color1, line_stroke, line_marker, line_marker_size * 0.6)
-    line_svg += draw_line_series(line_data_2, color2, line_stroke, line_marker, line_marker_size * 0.6)
+    # Stacked bars
+    for i, vals in enumerate(col_data):
+        cx = sc_l + i * grp_w + grp_w / 2
+        x = cx - bar_w / 2
+        y_cursor = sc_b
+        for j, v in enumerate(vals):
+            bh = (v / col_max) * sc_ch
+            y_cursor -= bh
+            col_svg += f'<rect x="{x:.1f}" y="{y_cursor:.1f}" width="{bar_w:.1f}" height="{bh:.1f}" fill="{col_segment_colors[j % 3]}"/>'
+        col_svg += f'<text x="{cx:.1f}" y="{sc_b + 12}" text-anchor="middle" font-size="9" fill="{col_ax_color}">{months_short[i]}</text>'
 
     # Legend
-    line_svg += f'<rect x="{l_chart_l}" y="{l_chart_b + 28}" width="10" height="3" rx="1" fill="{color1}"/>'
-    line_svg += f'<text x="{l_chart_l + 14}" y="{l_chart_b + 33}" font-size="10" fill="{line_ax_color}">Product A</text>'
-    line_svg += f'<rect x="{l_chart_l + 85}" y="{l_chart_b + 28}" width="10" height="3" rx="1" fill="{color2}"/>'
-    line_svg += f'<text x="{l_chart_l + 99}" y="{l_chart_b + 33}" font-size="10" fill="{line_ax_color}">Product B</text>'
-    line_svg += '</svg>'
+    for j, seg_label in enumerate(["Consumer", "Corporate", "Home Office"]):
+        lx = sc_l + j * 105
+        col_svg += f'<rect x="{lx}" y="{sc_b + 22}" width="8" height="8" rx="1.5" fill="{col_segment_colors[j]}"/>'
+        col_svg += f'<text x="{lx + 12}" y="{sc_b + 30}" font-size="9" fill="{col_ax_color}">{seg_label}</text>'
 
-    line_container = (
-        f'<div style="background:{line_bg};border:{line_border};border-radius:{line_radius}px;'
-        f'padding:12px;margin-bottom:8px;">{line_svg}</div>'
-    )
-    st.markdown(line_container, unsafe_allow_html=True)
+    col_svg += '</svg>'
 
-    st.divider()
+    bar_tile = pbi_tile("Sales Performance", "by Segment", col_svg, width_flex=2, height=260)
 
-    # ─────────────────────────────────────────
-    # Funnel Chart Preview (SVG)
-    # ─────────────────────────────────────────
-    st.subheader("Funnel Chart")
+    # ── Row 2b: Donut Chart SVG ───────────────────────────────────────────────
+    donut_data = [("Office Supplies", 2800, color1), ("Furniture", 1300, color2), ("Technology", 900, color3)]
+    donut_total = sum(v for _, v, _ in donut_data)
 
-    fun_bg, fun_border, fun_radius = get_container_style("funnel")
-    fun_title_color, fun_title_size, _ = get_title_props("funnel")
-    fun_sub_color, fun_sub_size = get_subtitle_props("funnel")
+    dn_w, dn_h = 260, 190
+    cx_d, cy_d = 110, 95
+    r_outer, r_inner = 75, 45
+    start_angle = -math.pi / 2
 
-    funnel_data = [
-        ("Leads", 1200),
-        ("Qualified", 840),
-        ("Proposals", 520),
-        ("Negotiations", 310),
-        ("Closed Won", 180),
+    donut_svg = f'<svg viewBox="0 0 {dn_w} {dn_h}" xmlns="http://www.w3.org/2000/svg" style="font-family:Segoe UI,sans-serif;width:100%;height:100%;">'
+
+    angle = start_angle
+    for seg_label, seg_val, seg_color in donut_data:
+        sweep = (seg_val / donut_total) * 2 * math.pi
+        x1o = cx_d + r_outer * math.cos(angle)
+        y1o = cy_d + r_outer * math.sin(angle)
+        x1i = cx_d + r_inner * math.cos(angle)
+        y1i = cy_d + r_inner * math.sin(angle)
+        angle += sweep
+        x2o = cx_d + r_outer * math.cos(angle)
+        y2o = cy_d + r_outer * math.sin(angle)
+        x2i = cx_d + r_inner * math.cos(angle)
+        y2i = cy_d + r_inner * math.sin(angle)
+        large = 1 if sweep > math.pi else 0
+        path = (
+            f"M {x1o:.2f} {y1o:.2f} "
+            f"A {r_outer} {r_outer} 0 {large} 1 {x2o:.2f} {y2o:.2f} "
+            f"L {x2i:.2f} {y2i:.2f} "
+            f"A {r_inner} {r_inner} 0 {large} 0 {x1i:.2f} {y1i:.2f} Z"
+        )
+        donut_svg += f'<path d="{path}" fill="{seg_color}" stroke="white" stroke-width="2"/>'
+
+    # Centre label
+    donut_svg += f'<text x="{cx_d}" y="{cy_d - 6}" text-anchor="middle" font-size="9" fill="{second_el}">ORDERS</text>'
+    donut_svg += f'<text x="{cx_d}" y="{cy_d + 12}" text-anchor="middle" font-size="18" font-weight="600" fill="{fg}">{donut_total:,}</text>'
+
+    # Legend
+    for j, (seg_label, seg_val, seg_color) in enumerate(donut_data):
+        ly = 22 + j * 18
+        donut_svg += f'<circle cx="{dn_w - 80}" cy="{ly}" r="5" fill="{seg_color}"/>'
+        donut_svg += f'<text x="{dn_w - 72}" y="{ly + 4}" font-size="9" fill="{second_el}">{seg_label}</text>'
+
+    donut_svg += '</svg>'
+
+    donut_tile = pbi_tile("Orders by Category", "", donut_svg, width_flex=1, height=260)
+
+    # ── Row 3: Table ──────────────────────────────────────────────────────────
+    tbl_accent = theme.get("tableAccent", accent)
+    tbl_header_bg = tbl_accent
+    tbl_row_alt = third_el
+
+    table_rows = [
+        ("CA-2014-100006", "07 Sep 2014", "DK-13375", "Dennis Kane",    "Standard Class", "United States", "New York City", "New York",    "East",  "3",  "$378"),
+        ("CA-2014-100090", "08 Jul 2014", "EB-13705", "Ed Braxton",     "Standard Class", "United States", "San Francisco", "California",  "West",  "9",  "$699"),
+        ("CA-2014-100293", "14 Mar 2014", "NF-18475", "Neil Franzósisch","Standard Class","United States", "Jacksonville", "Florida",     "South", "6",  "$91"),
+        ("CA-2014-100328", "28 Jan 2014", "JC-15340", "Jasper Cacioppo","Standard Class", "United States", "New York City", "New York",    "East",  "1",  "$4"),
     ]
-    f_max = funnel_data[0][1]
-    f_svg_w, f_svg_h = 700, 320
-    f_center_x = f_svg_w / 2
-    f_chart_t = 50
-    f_chart_b = 300
-    f_chart_h = f_chart_b - f_chart_t
-    f_max_half_w = 280
-    f_min_half_w = 60
-    n = len(funnel_data)
+    tbl_cols = ["Order ID", "Order Date", "Customer ID", "Customer Name", "Ship Mode", "Country", "City", "State", "Region", "Qty", "Sales"]
 
-    funnel_svg = f'<svg viewBox="0 0 {f_svg_w} {f_svg_h}" xmlns="http://www.w3.org/2000/svg" style="font-family:Segoe UI,sans-serif;">'
-    funnel_svg += f'<text x="{f_center_x}" y="22" text-anchor="middle" font-size="{min(fun_title_size,16)}" font-weight="600" fill="{fun_title_color}">Sales Funnel</text>'
-    funnel_svg += f'<text x="{f_center_x}" y="38" font-size="{min(fun_sub_size,12)}" text-anchor="middle" fill="{fun_sub_color}">by Stage</text>'
-
-    seg_h = f_chart_h / n
-    for i, (label, val) in enumerate(funnel_data):
-        # Width proportional to value
-        ratio = val / f_max
-        half_w_top = f_max_half_w * (funnel_data[i][1] / f_max)
-        half_w_bot = f_max_half_w * (funnel_data[i + 1][1] / f_max) if i < n - 1 else f_min_half_w
-
-        y_top = f_chart_t + i * seg_h
-        y_bot = y_top + seg_h
-
-        # Trapezoid points
-        points = (
-            f"{f_center_x - half_w_top},{y_top} "
-            f"{f_center_x + half_w_top},{y_top} "
-            f"{f_center_x + half_w_bot},{y_bot} "
-            f"{f_center_x - half_w_bot},{y_bot}"
+    def _tc(txt, bg, color, bold=False, align="left"):
+        fw = "600" if bold else "400"
+        return (
+            f'<td style="padding:5px 8px;background:{bg};color:{color};font-size:10px;'
+            f'font-weight:{fw};text-align:{align};font-family:Segoe UI,sans-serif;'
+            f'border-bottom:1px solid {third_el};white-space:nowrap;">{txt}</td>'
         )
 
-        c_idx = i % len(data_colors)
-        seg_color = data_colors[c_idx]
-        funnel_svg += f'<polygon points="{points}" fill="{seg_color}" stroke="white" stroke-width="2"/>'
-
-        # Label inside
-        mid_y = (y_top + y_bot) / 2 + 4
-        funnel_svg += f'<text x="{f_center_x}" y="{mid_y}" text-anchor="middle" font-size="12" font-weight="600" fill="white">{label}</text>'
-
-        # Value on right
-        funnel_svg += f'<text x="{f_center_x + half_w_top + 12}" y="{mid_y}" font-size="11" fill="{second_el}">{val:,}</text>'
-
-    funnel_svg += '</svg>'
-
-    fun_container = (
-        f'<div style="background:{fun_bg};border:{fun_border};border-radius:{fun_radius}px;'
-        f'padding:12px;margin-bottom:8px;">{funnel_svg}</div>'
+    tbl_html = (
+        f'<div style="overflow-x:auto;">'
+        f'<table style="width:100%;border-collapse:collapse;">'
+        f'<thead><tr>'
     )
-    st.markdown(fun_container, unsafe_allow_html=True)
+    for col_name in tbl_cols:
+        tbl_html += f'<th style="padding:6px 8px;background:{tbl_header_bg};color:#FFFFFF;font-size:10px;font-weight:600;text-align:left;font-family:Segoe UI,sans-serif;white-space:nowrap;">{col_name}</th>'
+    tbl_html += '</tr></thead><tbody>'
+    for ri, row in enumerate(table_rows):
+        row_bg = tbl_row_alt if ri % 2 == 1 else "#FFFFFF"
+        tbl_html += '<tr>'
+        for ci, cell in enumerate(row):
+            tbl_html += _tc(cell, row_bg, fg, align="right" if ci >= 9 else "left")
+        tbl_html += '</tr>'
+    tbl_html += '</tbody></table></div>'
+
+    table_tile = pbi_tile("Order Log", "", tbl_html, width_flex=1, height=180)
+
+    # ── Assemble the report canvas ────────────────────────────────────────────
+    vs = theme.get("visualStyles", {})
+    page_vis = vs.get("page", {}).get("*", {})
+    page_bg_items = page_vis.get("background", [{}])
+    if isinstance(page_bg_items, list) and page_bg_items:
+        canvas_bg_raw = page_bg_items[0].get("color", {})
+        if isinstance(canvas_bg_raw, dict):
+            canvas_bg = canvas_bg_raw.get("solid", {}).get("color", page_bg)
+        else:
+            canvas_bg = page_bg
+    else:
+        canvas_bg = page_bg
+
+    report_html = f"""
+<div style="background:{canvas_bg};padding:16px;border-radius:4px;border:1px solid {third_el};font-family:Segoe UI,sans-serif;">
+  <!-- KPI row -->
+  <div style="display:flex;gap:10px;margin-bottom:10px;">
+    {kpi_tiles}
+  </div>
+  <!-- Charts row -->
+  <div style="display:flex;gap:10px;margin-bottom:10px;">
+    {bar_tile}
+    {donut_tile}
+  </div>
+  <!-- Table row -->
+  <div style="display:flex;gap:10px;">
+    {table_tile}
+  </div>
+</div>
+"""
+    st.markdown(report_html, unsafe_allow_html=True)
 
     st.divider()
 
-    # ─────────────────────────────────────────
-    # Typography preview (compact)
-    # ─────────────────────────────────────────
-    st.subheader("Typography Classes")
-    for cls_key, cls_label in [("callout", "Callout"), ("title", "Title"), ("header", "Header"), ("label", "Label")]:
-        tc_item = theme.get("textClasses", {}).get(cls_key, {})
-        font = tc_item.get("fontFace", "Segoe UI")
-        size = tc_item.get("fontSize", 10)
-        color = tc_item.get("color", "#252423")
-        preview_size = min(size, 36)
-        st.markdown(
-            f'<div style="font-family:{font},sans-serif;font-size:{preview_size}px;color:{color};'
-            f'padding:2px 0;">{cls_label}: {font} {size}pt</div>',
-            unsafe_allow_html=True,
+    # ── Typography & gradient ─────────────────────────────────────────────────
+    col_typo, col_grad = st.columns([1, 1])
+    with col_typo:
+        st.subheader("Typography Classes")
+        for cls_key, cls_label in [("callout", "Callout"), ("title", "Title"), ("header", "Header"), ("label", "Label")]:
+            tc_item = theme.get("textClasses", {}).get(cls_key, {})
+            font = tc_item.get("fontFace", "Segoe UI")
+            size = tc_item.get("fontSize", 10)
+            color = tc_item.get("color", "#252423")
+            preview_size = min(size, 36)
+            st.markdown(
+                f'<div style="font-family:{font},sans-serif;font-size:{preview_size}px;color:{color};'
+                f'padding:2px 0;">{cls_label}: {font} {size}pt</div>',
+                unsafe_allow_html=True,
+            )
+    with col_grad:
+        st.subheader("Conditional Formatting Gradient")
+        grad_colors = [theme.get("minimum", "#DEEFFF"), theme.get("center", "#D9B300"), theme.get("maximum", "#118DFF")]
+        grad_html = (
+            f'<div style="height:28px;border-radius:6px;margin-top:8px;'
+            f'background:linear-gradient(to right, {grad_colors[0]}, {grad_colors[1]}, {grad_colors[2]});'
+            f'border:1px solid {third_el};"></div>'
+            f'<div style="display:flex;justify-content:space-between;font-size:10px;color:{second_el};">'
+            f'<span>Minimum</span><span>Center</span><span>Maximum</span></div>'
         )
-
-    st.divider()
-
-    # Conditional formatting gradient
-    st.subheader("Conditional Formatting Gradient")
-    grad_colors = [theme.get("minimum", "#DEEFFF"), theme.get("center", "#D9B300"), theme.get("maximum", "#118DFF")]
-    grad_html = (
-        f'<div style="height:28px;border-radius:6px;'
-        f'background:linear-gradient(to right, {grad_colors[0]}, {grad_colors[1]}, {grad_colors[2]});'
-        f'border:1px solid #ccc;"></div>'
-        f'<div style="display:flex;justify-content:space-between;font-size:10px;color:#666;">'
-        f'<span>Minimum</span><span>Center</span><span>Maximum</span></div>'
-    )
-    st.markdown(grad_html, unsafe_allow_html=True)
+        st.markdown(grad_html, unsafe_allow_html=True)
