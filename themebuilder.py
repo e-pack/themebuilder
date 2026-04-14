@@ -305,7 +305,6 @@ theme = st.session_state.theme
 # ─────────────────────────────────────────────
 NAV_ITEMS = [
     ("⚙️", "General"),
-    ("🎨", "Colors"),
     ("🔤", "Typography"),
     ("🌐", "Globals"),
     ("📊", "Visuals"),
@@ -465,58 +464,6 @@ if current_page == "General":
             theme["shapeStroke"] = st.color_picker("Shape Stroke", value=theme.get("shapeStroke", "#252423"), key="ext_shapeStroke")
             theme["disabledText"] = st.color_picker("Disabled Text", value=theme.get("disabledText", "#B3B0AD"), key="ext_disabledText")
             theme["mapPushpin"] = st.color_picker("Map Pushpin", value=theme.get("mapPushpin", "#118DFF"), key="ext_mapPushpin")
-
-
-
-
-# ═══════════════════════════════════════════
-# PAGE: Colors (Data Palette)
-# ═══════════════════════════════════════════
-if current_page == "Colors":
-    st.header("Data Colors")
-    st.caption("These colors are used for chart series, categories, and data points. "
-               "Power BI cycles through them in order.")
-
-    # Auto-generate option
-    with st.expander("🪄 Auto-Generate Palette from Primary Color"):
-        gen_col1, gen_col2 = st.columns([1, 3])
-        with gen_col1:
-            gen_primary = st.color_picker("Primary color", value=theme["dataColors"][0] if theme["dataColors"] else "#118DFF", key="gen_primary")
-        with gen_col2:
-            gen_count = st.slider("Number of colors", 4, 16, len(theme["dataColors"]), key="gen_count")
-        if st.button("Generate Palette"):
-            theme["dataColors"] = generate_palette(gen_primary, gen_count)
-            st.rerun()
-
-    st.divider()
-
-    # Manual color editing
-    num_colors = st.number_input(
-        "Number of data colors",
-        min_value=2, max_value=32,
-        value=len(theme.get("dataColors", [])),
-        key="num_data_colors"
-    )
-
-    # Adjust list length
-    while len(theme["dataColors"]) < num_colors:
-        theme["dataColors"].append("#888888")
-    theme["dataColors"] = theme["dataColors"][:num_colors]
-
-    # Render color pickers in rows of 8
-    for row_start in range(0, num_colors, 8):
-        cols = st.columns(min(8, num_colors - row_start))
-        for i, col in enumerate(cols):
-            idx = row_start + i
-            with col:
-                theme["dataColors"][idx] = st.color_picker(
-                    f"Color {idx + 1}",
-                    value=theme["dataColors"][idx],
-                    key=f"dc_{idx}"
-                )
-
-    st.subheader("Palette Preview")
-    render_swatch_row(theme["dataColors"], [f"#{i+1}" for i in range(len(theme["dataColors"]))])
 
 
 
