@@ -49,12 +49,14 @@ st.markdown("""
         color: #1a73e8 !important;
     }
 
-    /* ── Normalize vertical gap between sidebar nav items ── */
-    div[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
-        gap: 2px !important;
+    /* ── Normalize sidebar element-container margins ── */
+    div[data-testid="stSidebar"] .element-container {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
     }
-    div[data-testid="stSidebar"] div[data-testid="stMarkdownContainer"] {
-        line-height: 0 !important;
+    div[data-testid="stSidebar"] div[data-testid="stButton"] {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
     }
 
     /* ── Active nav item (rendered as markdown div) ── */
@@ -68,6 +70,7 @@ st.markdown("""
         font-size: 0.95rem;
         line-height: 1.5;
         display: block;
+        box-sizing: border-box;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -304,6 +307,7 @@ NAV_ITEMS = [
     ("⚙️", "General"),
     ("🎨", "Colors"),
     ("🔤", "Typography"),
+    ("🌐", "Globals"),
     ("📊", "Visuals"),
     ("📄", "JSON"),
     ("👁️", "Preview"),
@@ -575,285 +579,341 @@ if current_page == "Typography":
 
 
 # ═══════════════════════════════════════════
-# PAGE: Visual Styles
+# PAGE: Global Visual Defaults
 # ═══════════════════════════════════════════
-if current_page == "Visuals":
-    st.header("Visual Styles")
-    st.caption("Configure background, border, and formatting defaults per visual type. "
-               "The global wildcard (*) applies to all visuals unless overridden.")
+if current_page == "Globals":
+    st.header("Global Visual Defaults")
+    st.caption("Settings here write to `visualStyles.*.*` and apply to every visual on every page. "
+               "Individual visuals can override these in the Visuals tab.")
 
     if "visualStyles" not in theme:
         theme["visualStyles"] = {}
 
     vs = theme["visualStyles"]
 
-    # ── Global wildcard section ──
-    with st.expander("🌐 Global Defaults (applies to all visuals)", expanded=True):
-        st.caption("Settings here apply to every visual. Override per-visual below.")
+    if "*" not in vs:
+        vs["*"] = {"*": {}}
+    glob = vs["*"].get("*", {})
+    vs["*"]["*"] = glob
 
-        if "*" not in vs:
-            vs["*"] = {"*": {}}
-        glob = vs["*"].get("*", {})
-        vs["*"]["*"] = glob
+    # ── Border ──
+    st.subheader("Border")
+    bdr_cfg = glob.get("border", [{}])[0] if "border" in glob else {}
+    bd_col1, bd_col2, bd_col3, bd_col4 = st.columns(4)
+    with bd_col1:
+        bd_show = st.checkbox("Show border", value=bdr_cfg.get("show", False), key="glob_bd_show")
+    with bd_col2:
+        bd_color = st.color_picker(
+            "Border color",
+            value=bdr_cfg.get("color", {}).get("solid", {}).get("color", "#E0E0E0"),
+            key="glob_bd_color"
+        )
+    with bd_col3:
+        bd_radius = st.number_input("Corner radius", 0, 50,
+                                    value=int(bdr_cfg.get("radius", 0)), key="glob_bd_radius")
+    with bd_col4:
+        bd_width = st.number_input("Width", 0, 10,
+                                   value=int(bdr_cfg.get("width", 1)), key="glob_bd_width")
 
-        # Title
-        st.markdown("**Visual Title**")
-        title_cfg = glob.get("title", [{}])[0] if "title" in glob else {}
-        t_col1, t_col2, t_col3, t_col4 = st.columns(4)
-        with t_col1:
-            title_show = st.checkbox("Show title", value=title_cfg.get("show", True), key="glob_title_show")
-        with t_col2:
-            title_color = st.color_picker(
-                "Title color",
-                value=title_cfg.get("fontColor", {}).get("solid", {}).get("color", "#252423"),
-                key="glob_title_color"
-            )
-        with t_col3:
-            title_size = st.number_input(
-                "Title size", 8, 36,
-                value=title_cfg.get("fontSize", 14),
-                key="glob_title_size"
-            )
-        with t_col4:
-            title_font_val = title_cfg.get("fontFamily", "Segoe UI Semibold")
-            title_font_idx = FONT_OPTIONS.index(title_font_val) if title_font_val in FONT_OPTIONS else 0
-            title_font = st.selectbox("Title font", FONT_OPTIONS, index=title_font_idx, key="glob_title_font")
+    glob["border"] = [{"show": bd_show, "color": color_fill(bd_color),
+                       "radius": bd_radius, "width": bd_width}]
 
-        glob["title"] = [{
-            "show": title_show,
-            "fontColor": color_fill(title_color),
-            "fontSize": title_size,
-            "fontFamily": title_font,
-            "alignment": "Left",
-        }]
+    st.divider()
 
-        st.divider()
+    # ── Background ──
+    st.subheader("Background")
+    bg_cfg = glob.get("background", [{}])[0] if "background" in glob else {}
+    bg_col1, bg_col2, bg_col3 = st.columns(3)
+    with bg_col1:
+        bg_show = st.checkbox("Show background", value=bg_cfg.get("show", False), key="glob_bg_show")
+    with bg_col2:
+        bg_color = st.color_picker(
+            "Color",
+            value=bg_cfg.get("color", {}).get("solid", {}).get("color", "#FFFFFF"),
+            key="glob_bg_color"
+        )
+    with bg_col3:
+        bg_trans = st.slider("Transparency %", 0, 100,
+                             value=int(bg_cfg.get("transparency", 0)), key="glob_bg_trans")
 
-        # Subtitle
-        st.markdown("**Subtitle**")
-        sub_cfg = glob.get("subTitle", [{}])[0] if "subTitle" in glob else {}
-        s_col1, s_col2, s_col3 = st.columns(3)
-        with s_col1:
-            sub_color = st.color_picker(
-                "Subtitle color",
-                value=sub_cfg.get("fontColor", {}).get("solid", {}).get("color", "#6B6B6B"),
-                key="glob_sub_color"
-            )
-        with s_col2:
-            sub_size = st.number_input("Subtitle size", 6, 24,
-                                        value=sub_cfg.get("fontSize", 11), key="glob_sub_size")
-        with s_col3:
-            sub_font_val = sub_cfg.get("fontFamily", "Segoe UI")
-            sub_font_idx = FONT_OPTIONS.index(sub_font_val) if sub_font_val in FONT_OPTIONS else 0
-            sub_font = st.selectbox("Subtitle font", FONT_OPTIONS, index=sub_font_idx, key="glob_sub_font")
+    glob["background"] = [{"show": bg_show, "color": color_fill(bg_color), "transparency": bg_trans}]
 
-        glob["subTitle"] = [{
-            "show": True,
-            "fontColor": color_fill(sub_color),
-            "fontSize": sub_size,
-            "fontFamily": sub_font,
-        }]
+    st.divider()
 
-        st.divider()
+    # ── Visual Title ──
+    st.subheader("Visual Title")
+    title_cfg = glob.get("title", [{}])[0] if "title" in glob else {}
+    t_col1, t_col2, t_col3, t_col4 = st.columns(4)
+    with t_col1:
+        title_show = st.checkbox("Show title", value=title_cfg.get("show", True), key="glob_title_show")
+    with t_col2:
+        title_color = st.color_picker(
+            "Title color",
+            value=title_cfg.get("fontColor", {}).get("solid", {}).get("color", "#252423"),
+            key="glob_title_color"
+        )
+    with t_col3:
+        title_size = st.number_input("Title size", 8, 36,
+                                     value=title_cfg.get("fontSize", 14), key="glob_title_size")
+    with t_col4:
+        title_font_val = title_cfg.get("fontFamily", "Segoe UI Semibold")
+        title_font_idx = FONT_OPTIONS.index(title_font_val) if title_font_val in FONT_OPTIONS else 0
+        title_font = st.selectbox("Title font", FONT_OPTIONS, index=title_font_idx, key="glob_title_font")
 
-        # Category Axis
-        st.markdown("**Category Axis**")
-        cat_cfg = glob.get("categoryAxis", [{}])[0] if "categoryAxis" in glob else {}
-        ca_col1, ca_col2, ca_col3, ca_col4 = st.columns(4)
-        with ca_col1:
-            ca_label_color = st.color_picker(
-                "Axis label color",
-                value=cat_cfg.get("labelColor", {}).get("solid", {}).get("color", "#6B6B6B"),
-                key="glob_ca_color"
-            )
-        with ca_col2:
-            ca_size = st.number_input("Axis font size", 6, 24,
-                                       value=cat_cfg.get("fontSize", 10), key="glob_ca_size")
-        with ca_col3:
-            ca_show_title = st.checkbox("Show axis title", value=cat_cfg.get("showAxisTitle", False), key="glob_ca_title")
-        with ca_col4:
-            ca_gridline = st.checkbox("Show gridlines", value=cat_cfg.get("gridlineShow", False), key="glob_ca_grid")
+    glob["title"] = [{
+        "show": title_show,
+        "fontColor": color_fill(title_color),
+        "fontSize": title_size,
+        "fontFamily": title_font,
+        "alignment": "Left",
+    }]
 
-        glob["categoryAxis"] = [{
-            "show": True,
-            "labelColor": color_fill(ca_label_color),
-            "fontSize": ca_size,
-            "fontFamily": "Segoe UI",
-            "showAxisTitle": ca_show_title,
-            "gridlineShow": ca_gridline,
-        }]
+    st.divider()
 
-        st.divider()
+    # ── Subtitle ──
+    st.subheader("Subtitle")
+    sub_cfg = glob.get("subTitle", [{}])[0] if "subTitle" in glob else {}
+    s_col1, s_col2, s_col3 = st.columns(3)
+    with s_col1:
+        sub_color = st.color_picker(
+            "Subtitle color",
+            value=sub_cfg.get("fontColor", {}).get("solid", {}).get("color", "#6B6B6B"),
+            key="glob_sub_color"
+        )
+    with s_col2:
+        sub_size = st.number_input("Subtitle size", 6, 24,
+                                   value=sub_cfg.get("fontSize", 11), key="glob_sub_size")
+    with s_col3:
+        sub_font_val = sub_cfg.get("fontFamily", "Segoe UI")
+        sub_font_idx = FONT_OPTIONS.index(sub_font_val) if sub_font_val in FONT_OPTIONS else 0
+        sub_font = st.selectbox("Subtitle font", FONT_OPTIONS, index=sub_font_idx, key="glob_sub_font")
 
-        # Value Axis
-        st.markdown("**Value Axis**")
-        val_cfg = glob.get("valueAxis", [{}])[0] if "valueAxis" in glob else {}
-        va_col1, va_col2, va_col3, va_col4 = st.columns(4)
-        with va_col1:
-            va_label_color = st.color_picker(
-                "Axis label color",
-                value=val_cfg.get("labelColor", {}).get("solid", {}).get("color", "#6B6B6B"),
-                key="glob_va_color"
-            )
-        with va_col2:
-            va_size = st.number_input("Axis font size", 6, 24,
-                                       value=val_cfg.get("fontSize", 10), key="glob_va_size")
-        with va_col3:
-            va_gridline = st.checkbox("Show gridlines", value=val_cfg.get("gridlineShow", True), key="glob_va_grid")
-        with va_col4:
-            va_grid_color = st.color_picker(
-                "Gridline color",
-                value=val_cfg.get("gridlineColor", {}).get("solid", {}).get("color", "#E0E0E0"),
-                key="glob_va_grid_color"
-            )
+    glob["subTitle"] = [{
+        "show": True,
+        "fontColor": color_fill(sub_color),
+        "fontSize": sub_size,
+        "fontFamily": sub_font,
+    }]
 
-        glob["valueAxis"] = [{
-            "show": True,
-            "labelColor": color_fill(va_label_color),
-            "fontSize": va_size,
-            "fontFamily": "Segoe UI",
-            "showAxisTitle": False,
-            "gridlineShow": va_gridline,
-            "gridlineColor": color_fill(va_grid_color),
-            "gridlineThickness": 1,
-        }]
+    st.divider()
 
-        st.divider()
+    # ── Category Axis ──
+    st.subheader("Category Axis")
+    cat_cfg = glob.get("categoryAxis", [{}])[0] if "categoryAxis" in glob else {}
+    ca_col1, ca_col2, ca_col3, ca_col4 = st.columns(4)
+    with ca_col1:
+        ca_label_color = st.color_picker(
+            "Label color",
+            value=cat_cfg.get("labelColor", {}).get("solid", {}).get("color", "#6B6B6B"),
+            key="glob_ca_color"
+        )
+    with ca_col2:
+        ca_size = st.number_input("Font size", 6, 24,
+                                  value=cat_cfg.get("fontSize", 10), key="glob_ca_size")
+    with ca_col3:
+        ca_show_title = st.checkbox("Show axis title", value=cat_cfg.get("showAxisTitle", False),
+                                    key="glob_ca_title")
+    with ca_col4:
+        ca_gridline = st.checkbox("Show gridlines", value=cat_cfg.get("gridlineShow", False),
+                                  key="glob_ca_grid")
 
-        # Legend
-        st.markdown("**Legend**")
-        leg_cfg = glob.get("legend", [{}])[0] if "legend" in glob else {}
-        lg_col1, lg_col2, lg_col3, lg_col4 = st.columns(4)
-        with lg_col1:
-            lg_show = st.checkbox("Show legend", value=leg_cfg.get("show", True), key="glob_lg_show")
-        with lg_col2:
-            lg_pos_options = ["Top", "Bottom", "Left", "Right", "TopCenter", "BottomCenter"]
-            lg_pos_val = leg_cfg.get("position", "Top")
-            lg_pos_idx = lg_pos_options.index(lg_pos_val) if lg_pos_val in lg_pos_options else 0
-            lg_pos = st.selectbox("Position", lg_pos_options, index=lg_pos_idx, key="glob_lg_pos")
-        with lg_col3:
-            lg_size = st.number_input("Font size", 6, 24,
-                                       value=leg_cfg.get("fontSize", 10), key="glob_lg_size")
-        with lg_col4:
-            lg_color = st.color_picker(
-                "Label color",
-                value=leg_cfg.get("labelColor", {}).get("solid", {}).get("color", "#6B6B6B"),
-                key="glob_lg_color"
-            )
+    glob["categoryAxis"] = [{
+        "show": True,
+        "labelColor": color_fill(ca_label_color),
+        "fontSize": ca_size,
+        "fontFamily": "Segoe UI",
+        "showAxisTitle": ca_show_title,
+        "gridlineShow": ca_gridline,
+    }]
 
-        glob["legend"] = [{
-            "show": lg_show,
-            "position": lg_pos,
-            "fontSize": lg_size,
-            "fontFamily": "Segoe UI",
-            "labelColor": color_fill(lg_color),
-        }]
+    st.divider()
 
-        st.divider()
+    # ── Value Axis ──
+    st.subheader("Value Axis")
+    val_cfg = glob.get("valueAxis", [{}])[0] if "valueAxis" in glob else {}
+    va_col1, va_col2, va_col3, va_col4 = st.columns(4)
+    with va_col1:
+        va_label_color = st.color_picker(
+            "Label color",
+            value=val_cfg.get("labelColor", {}).get("solid", {}).get("color", "#6B6B6B"),
+            key="glob_va_color"
+        )
+    with va_col2:
+        va_size = st.number_input("Font size", 6, 24,
+                                  value=val_cfg.get("fontSize", 10), key="glob_va_size")
+    with va_col3:
+        va_gridline = st.checkbox("Show gridlines", value=val_cfg.get("gridlineShow", True),
+                                  key="glob_va_grid")
+    with va_col4:
+        va_grid_color = st.color_picker(
+            "Gridline color",
+            value=val_cfg.get("gridlineColor", {}).get("solid", {}).get("color", "#E0E0E0"),
+            key="glob_va_grid_color"
+        )
 
-        # Visual Header
-        st.markdown("**Visual Header**")
-        vh_cfg = glob.get("visualHeader", [{}])[0] if "visualHeader" in glob else {}
-        vh_col1, vh_col2, vh_col3 = st.columns(3)
-        with vh_col1:
-            vh_show = st.checkbox("Show header", value=vh_cfg.get("show", True), key="glob_vh_show")
-        with vh_col2:
-            vh_icon_color = st.color_picker(
-                "Icon color",
-                value=vh_cfg.get("foreground", {}).get("solid", {}).get("color", "#252423"),
-                key="glob_vh_icon"
-            )
-        with vh_col3:
-            vh_bg_color = st.color_picker(
-                "Header background",
-                value=vh_cfg.get("background", {}).get("solid", {}).get("color", "#FFFFFF"),
-                key="glob_vh_bg"
-            )
+    glob["valueAxis"] = [{
+        "show": True,
+        "labelColor": color_fill(va_label_color),
+        "fontSize": va_size,
+        "fontFamily": "Segoe UI",
+        "showAxisTitle": False,
+        "gridlineShow": va_gridline,
+        "gridlineColor": color_fill(va_grid_color),
+        "gridlineThickness": 1,
+    }]
 
-        glob["visualHeader"] = [{
-            "show": vh_show,
-            "foreground": color_fill(vh_icon_color),
-            "background": color_fill(vh_bg_color),
-        }]
+    st.divider()
 
-        st.divider()
+    # ── Legend ──
+    st.subheader("Legend")
+    leg_cfg = glob.get("legend", [{}])[0] if "legend" in glob else {}
+    lg_col1, lg_col2, lg_col3, lg_col4 = st.columns(4)
+    with lg_col1:
+        lg_show = st.checkbox("Show legend", value=leg_cfg.get("show", True), key="glob_lg_show")
+    with lg_col2:
+        lg_pos_options = ["Top", "Bottom", "Left", "Right", "TopCenter", "BottomCenter"]
+        lg_pos_val = leg_cfg.get("position", "Top")
+        lg_pos_idx = lg_pos_options.index(lg_pos_val) if lg_pos_val in lg_pos_options else 0
+        lg_pos = st.selectbox("Position", lg_pos_options, index=lg_pos_idx, key="glob_lg_pos")
+    with lg_col3:
+        lg_size = st.number_input("Font size", 6, 24,
+                                  value=leg_cfg.get("fontSize", 10), key="glob_lg_size")
+    with lg_col4:
+        lg_color = st.color_picker(
+            "Label color",
+            value=leg_cfg.get("labelColor", {}).get("solid", {}).get("color", "#6B6B6B"),
+            key="glob_lg_color"
+        )
 
-        # Drop Shadow
-        st.markdown("**Drop Shadow**")
-        ds_cfg = glob.get("dropShadow", [{}])[0] if "dropShadow" in glob else {}
-        ds_col1, ds_col2, ds_col3, ds_col4 = st.columns(4)
-        with ds_col1:
-            ds_show = st.checkbox("Show shadow", value=ds_cfg.get("show", False), key="glob_ds_show")
-        with ds_col2:
-            ds_color = st.color_picker(
-                "Shadow color",
-                value=ds_cfg.get("color", {}).get("solid", {}).get("color", "#000000"),
-                key="glob_ds_color"
-            )
-        with ds_col3:
-            ds_preset_opts = ["BottomRight", "Bottom", "BottomLeft", "CenterRight", "Center",
-                              "CenterLeft", "TopRight", "Top", "TopLeft", "Custom"]
-            ds_preset_val = ds_cfg.get("preset", "BottomRight")
-            ds_preset_idx = ds_preset_opts.index(ds_preset_val) if ds_preset_val in ds_preset_opts else 0
-            ds_preset = st.selectbox("Preset", ds_preset_opts, index=ds_preset_idx, key="glob_ds_preset")
-        with ds_col4:
-            ds_blur = st.number_input("Blur", 0, 50, value=int(ds_cfg.get("shadowBlur", 4)), key="glob_ds_blur")
+    glob["legend"] = [{
+        "show": lg_show,
+        "position": lg_pos,
+        "fontSize": lg_size,
+        "fontFamily": "Segoe UI",
+        "labelColor": color_fill(lg_color),
+    }]
 
-        glob["dropShadow"] = [{
-            "show": ds_show,
-            "color": color_fill(ds_color),
-            "preset": ds_preset,
-            "shadowBlur": ds_blur,
-        }]
+    st.divider()
 
-        st.divider()
+    # ── Visual Header ──
+    st.subheader("Visual Header")
+    vh_cfg = glob.get("visualHeader", [{}])[0] if "visualHeader" in glob else {}
+    vh_col1, vh_col2, vh_col3 = st.columns(3)
+    with vh_col1:
+        vh_show = st.checkbox("Show header", value=vh_cfg.get("show", True), key="glob_vh_show")
+    with vh_col2:
+        vh_icon_color = st.color_picker(
+            "Icon color",
+            value=vh_cfg.get("foreground", {}).get("solid", {}).get("color", "#252423"),
+            key="glob_vh_icon"
+        )
+    with vh_col3:
+        vh_bg_color = st.color_picker(
+            "Header background",
+            value=vh_cfg.get("background", {}).get("solid", {}).get("color", "#FFFFFF"),
+            key="glob_vh_bg"
+        )
 
-        # Padding
-        st.markdown("**Visual Padding**")
-        pad_cfg = glob.get("padding", [{}])[0] if "padding" in glob else {}
-        pad_col1, pad_col2, pad_col3, pad_col4 = st.columns(4)
-        with pad_col1:
-            pad_top = st.number_input("Top", 0, 50,
-                                      value=int(pad_cfg.get("top", 8)), key="glob_pad_top")
-        with pad_col2:
-            pad_right = st.number_input("Right", 0, 50,
-                                        value=int(pad_cfg.get("right", 8)), key="glob_pad_right")
-        with pad_col3:
-            pad_bottom = st.number_input("Bottom", 0, 50,
-                                         value=int(pad_cfg.get("bottom", 8)), key="glob_pad_bottom")
-        with pad_col4:
-            pad_left = st.number_input("Left", 0, 50,
-                                       value=int(pad_cfg.get("left", 8)), key="glob_pad_left")
+    glob["visualHeader"] = [{
+        "show": vh_show,
+        "foreground": color_fill(vh_icon_color),
+        "background": color_fill(vh_bg_color),
+    }]
 
-        glob["padding"] = [{"top": pad_top, "right": pad_right, "bottom": pad_bottom, "left": pad_left}]
+    st.divider()
 
-    # ── Page background ──
-    with st.expander("📄 Page Background"):
-        if "page" not in vs:
-            vs["page"] = {"*": {}}
-        page_bg_cfg = vs["page"].get("*", {}).get("background", [{}])[0] if "background" in vs["page"].get("*", {}) else {}
+    # ── Drop Shadow ──
+    st.subheader("Drop Shadow")
+    ds_cfg = glob.get("dropShadow", [{}])[0] if "dropShadow" in glob else {}
+    ds_col1, ds_col2, ds_col3, ds_col4 = st.columns(4)
+    with ds_col1:
+        ds_show = st.checkbox("Show shadow", value=ds_cfg.get("show", False), key="glob_ds_show")
+    with ds_col2:
+        ds_color = st.color_picker(
+            "Shadow color",
+            value=ds_cfg.get("color", {}).get("solid", {}).get("color", "#000000"),
+            key="glob_ds_color"
+        )
+    with ds_col3:
+        ds_preset_opts = ["BottomRight", "Bottom", "BottomLeft", "CenterRight", "Center",
+                          "CenterLeft", "TopRight", "Top", "TopLeft", "Custom"]
+        ds_preset_val = ds_cfg.get("preset", "BottomRight")
+        ds_preset_idx = ds_preset_opts.index(ds_preset_val) if ds_preset_val in ds_preset_opts else 0
+        ds_preset = st.selectbox("Preset", ds_preset_opts, index=ds_preset_idx, key="glob_ds_preset")
+    with ds_col4:
+        ds_blur = st.number_input("Blur", 0, 50,
+                                  value=int(ds_cfg.get("shadowBlur", 4)), key="glob_ds_blur")
 
-        pg_col1, pg_col2 = st.columns(2)
-        with pg_col1:
-            page_bg = st.color_picker(
-                "Page background color",
-                value=page_bg_cfg.get("color", {}).get("solid", {}).get("color", "#FFFFFF"),
-                key="page_bg_color"
-            )
-        with pg_col2:
-            page_transparency = st.slider(
-                "Transparency %", 0, 100,
-                value=page_bg_cfg.get("transparency", 0),
-                key="page_bg_trans"
-            )
+    glob["dropShadow"] = [{
+        "show": ds_show,
+        "color": color_fill(ds_color),
+        "preset": ds_preset,
+        "shadowBlur": ds_blur,
+    }]
 
-        vs["page"]["*"]["background"] = [{
-            "color": color_fill(page_bg),
-            "transparency": page_transparency,
-        }]
+    st.divider()
+
+    # ── Padding ──
+    st.subheader("Visual Padding")
+    pad_cfg = glob.get("padding", [{}])[0] if "padding" in glob else {}
+    pad_col1, pad_col2, pad_col3, pad_col4 = st.columns(4)
+    with pad_col1:
+        pad_top = st.number_input("Top", 0, 50,
+                                  value=int(pad_cfg.get("top", 8)), key="glob_pad_top")
+    with pad_col2:
+        pad_right = st.number_input("Right", 0, 50,
+                                    value=int(pad_cfg.get("right", 8)), key="glob_pad_right")
+    with pad_col3:
+        pad_bottom = st.number_input("Bottom", 0, 50,
+                                     value=int(pad_cfg.get("bottom", 8)), key="glob_pad_bottom")
+    with pad_col4:
+        pad_left = st.number_input("Left", 0, 50,
+                                   value=int(pad_cfg.get("left", 8)), key="glob_pad_left")
+
+    glob["padding"] = [{"top": pad_top, "right": pad_right, "bottom": pad_bottom, "left": pad_left}]
+
+    st.divider()
+
+    # ── Page Background ──
+    st.subheader("Page Background")
+    if "page" not in vs:
+        vs["page"] = {"*": {}}
+    page_bg_cfg = vs["page"].get("*", {}).get("background", [{}])[0] if "background" in vs["page"].get("*", {}) else {}
+
+    pg_col1, pg_col2 = st.columns(2)
+    with pg_col1:
+        page_bg = st.color_picker(
+            "Page background color",
+            value=page_bg_cfg.get("color", {}).get("solid", {}).get("color", "#FFFFFF"),
+            key="page_bg_color"
+        )
+    with pg_col2:
+        page_transparency = st.slider(
+            "Transparency %", 0, 100,
+            value=page_bg_cfg.get("transparency", 0),
+            key="page_bg_trans"
+        )
+
+    vs["page"]["*"]["background"] = [{
+        "color": color_fill(page_bg),
+        "transparency": page_transparency,
+    }]
+
+
+# ═══════════════════════════════════════════
+# PAGE: Visual Styles
+# ═══════════════════════════════════════════
+if current_page == "Visuals":
+    st.header("Visual Styles")
+    st.caption("Configure background, border, and formatting for individual visual types. "
+               "Global defaults (applying to all visuals) are set in the Globals tab.")
+
+    if "visualStyles" not in theme:
+        theme["visualStyles"] = {}
+
+    vs = theme["visualStyles"]
 
     # ── Per-visual overrides ──
-    st.divider()
     st.subheader("Per-Visual Overrides")
     st.caption("Enable and configure background, border, and specific formatting for individual visual types.")
 
