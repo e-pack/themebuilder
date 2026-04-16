@@ -306,8 +306,8 @@ theme = st.session_state.theme
 NAV_ITEMS = [
     ("⚙️", "General"),
     ("🔤", "Typography"),
-    ("🌐", "Globals"),
-    ("📊", "Visuals"),
+    ("🌐", "Global Visual Settings"),
+    ("📊", "Visual Settings"),
     ("📄", "JSON"),
     ("👁️", "Preview"),
 ]
@@ -528,7 +528,7 @@ if current_page == "Typography":
 # ═══════════════════════════════════════════
 # PAGE: Global Visual Defaults
 # ═══════════════════════════════════════════
-if current_page == "Globals":
+if current_page == "Global Visual Settings":
     st.header("Global Visual Defaults")
     st.caption("Settings here write to `visualStyles.*.*` and apply to every visual on every page. "
                "Individual visuals can override these in the Visuals tab.")
@@ -850,7 +850,7 @@ if current_page == "Globals":
 # ═══════════════════════════════════════════
 # PAGE: Visual Styles
 # ═══════════════════════════════════════════
-if current_page == "Visuals":
+if current_page == "Visual Settings":
     st.header("Visual Styles")
     st.caption("Configure background, border, and formatting for individual visual types. "
                "Global defaults (applying to all visuals) are set in the Globals tab.")
